@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // Administrator, Seller
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id            String          @id @default(uuid())
+  username      String          @unique
+  name          String
+  lastName      String
+  cedula        String?         @unique
+  email         String          @unique
+  password      String
+  roleId        String
+  role          Role            @relation(fields: [roleId], references: [id])
+  isActive      Boolean         @default(true)
+  loginAttempts Int             @default(0)
+  isLocked      Boolean         @default(false)
+  sales         Sale[]
+  stockMovements StockMovement[]
+  errorLogs     ErrorLog[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([username])
+  @@index([email])
+}
+
+model Customer {
+  id        String   @id // Cédula/RUC
+  name      String
+  lastName  String
+  phone     String
+  address   String
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  sales     Sale[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([lastName])
+}
+
+model Product {
+  id             String          @id @default(uuid())
+  code           String          @unique
+  name           String
+  price          Float
+  stock          Int
+  appliesIva     Boolean         @default(true)
+  isActive       Boolean         @default(true)
+  saleDetails    SaleDetail[]
+  stockMovements StockMovement[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([name])
+  @@index([code])
+}
+
+model PaymentMethod {
+  id        String   @id @default(uuid())
+  name      String   @unique // Cash is mandatory, but allow others
+  isActive  Boolean  @default(true)
+  sales     Sale[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Sale {
+  id              Int           @id @default(autoincrement())
+  number          String        @unique
+  date            DateTime      @default(now())
+  status          String        @default("Draft") // Draft, Confirmed, Cancelled
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  paymentMethodId String
+  paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  subtotal        Float
+  iva             Float
+  total           Float
+  details         SaleDetail[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([number])
+  @@index([date])
+}
+
+model SaleDetail {
+  id          String  @id @default(uuid())
+  saleId      Int
+  sale        Sale    @relation(fields: [saleId], references: [id])
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  productName String  // Historical snapshot
+  productCode String  // Historical snapshot
+  quantity    Int
+  price       Float   // Historical price
+  subtotal    Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StockMovement {
+  id           String   @id @default(uuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  type         String   // IN, OUT, ADJUSTMENT
+  quantity     Int
+  stockBefore  Int
+  stockAfter   Int
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  reference    String?  // Sale number, etc.
+  createdAt    DateTime @default(now())
+}
+
+model ErrorLog {
+  id            String   @id @default(uuid())
+  message       String   @db.Text
+  exceptionType String?
+  stackTrace    String?  @db.Text
+  source        String?
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}

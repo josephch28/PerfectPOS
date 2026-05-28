@@ -1,0 +1,210 @@
+import { PrismaClient } from '@prisma/client';
+import { Sale, SaleStatus } from '../../../domain/entities/index';
+import { ISaleRepository } from '../../../domain/repositories/index';
+
+export class PrismaSaleRepository implements ISaleRepository {
+  constructor(private prisma: PrismaClient) {}
+
+  async create(sale: Sale) {
+    return this.prisma.$transaction(async (tx) => {
+      // Create the sale
+      const result = await tx.sale.create({
+        data: {
+          number: sale.number,
+          date: sale.date,
+          status: sale.status,
+          customerId: sale.customerId,
+          userId: sale.userId,
+          paymentMethodId: sale.paymentMethodId,
+          subtotal: sale.subtotal,
+          iva: sale.iva,
+          total: sale.total,
+          details: {
+            create: sale.details.map(d => ({
+              productId: d.productId,
+              productName: d.productName,
+              productCode: d.productCode,
+              quantity: d.quantity,
+              price: d.price,
+              subtotal: d.subtotal
+            }))
+          }
+        },
+        include: {
+          details: true,
+          customer: true,
+          user: true,
+          paymentMethod: true
+        }
+      });
+
+      // If Confirmed, stock should have been handled by Use Case or here?
+      // PDF says: "El stock se descuenta únicamente cuando la venta pasa a Confirmed."
+      // If we are creating it directly as Confirmed:
+      if (sale.status === SaleStatus.Confirmed) {
+        for (const detail of sale.details) {
+          const product = await tx.product.findUnique({ where: { id: detail.productId } });
+          if (!product) throw new Error(`Product ${detail.productId} not found`);
+          
+          await tx.product.update({
+            where: { id: detail.productId },
+            data: { stock: { decrement: detail.quantity } }
+          });
+
+          // Register Stock Movement
+          await tx.stockMovement.create({
+            data: {
+              productId: detail.productId,
+              type: 'OUT',
+              quantity: detail.quantity,
+              stockBefore: product.stock,
+              stockAfter: product.stock - detail.quantity,
+              userId: sale.userId,
+              reference: `Sale #${sale.number}`
+            }
+          });
+        }
+      }
+
+      return result as unknown as Sale;
+    });
+  }
+
+  async findById(id: number) {
+    const result = await this.prisma.sale.findUnique({
+      where: { id },
+      include: {
+        details: true,
+        customer: true,
+        user: { include: { role: true } },
+        paymentMethod: true
+      }
+    });
+    return result as unknown as Sale;
+  }
+
+  async findAll(page: number, limit: number, search?: string, searchField?: string) {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (search) {
+      if (searchField === 'number') {
+        where.number = { startsWith: search };
+      } else if (searchField === 'customer') {
+        where.customer = {
+          OR: [
+            { name: { startsWith: search } },
+            { lastName: { startsWith: search } }
+          ]
+        };
+      } else {
+        const isIdSearch = !isNaN(Number(search));
+        if (isIdSearch) {
+          where.id = Number(search);
+        } else {
+          where.OR = [
+            { number: { startsWith: search } },
+            { customer: { name: { startsWith: search } } },
+            { customer: { lastName: { startsWith: search } } }
+          ];
+        }
+      }
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.sale.findMany({
+        skip,
+        take: limit,
+        where,
+        include: {
+          customer: true,
+          user: true,
+          paymentMethod: true
+        },
+        orderBy: { date: 'desc' }
+      }),
+      this.prisma.sale.count({ where })
+    ]);
+
+    return { data: data as unknown as Sale[], total };
+  }
+
+  async getLastNumber() {
+    const last = await this.prisma.sale.findFirst({
+      orderBy: { id: 'desc' }
+    });
+    return last ? parseInt(last.number) : 0;
+  }
+
+  async updateStatus(id: number, status: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const sale = await tx.sale.findUnique({
+        where: { id },
+        include: { details: true }
+      });
+
+      if (!sale) throw new Error("Sale not found");
+
+      // Handle stock if transitioning to Confirmed
+      if (status === SaleStatus.Confirmed && sale.status !== SaleStatus.Confirmed) {
+        for (const detail of sale.details) {
+          const product = await tx.product.findUnique({ where: { id: detail.productId } });
+          if (!product) throw new Error(`Product ${detail.productId} not found`);
+          
+          await tx.product.update({
+            where: { id: detail.productId },
+            data: { stock: { decrement: detail.quantity } }
+          });
+
+          await tx.stockMovement.create({
+            data: {
+              productId: detail.productId,
+              type: 'OUT',
+              quantity: detail.quantity,
+              stockBefore: product.stock,
+              stockAfter: product.stock - detail.quantity,
+              userId: sale.userId,
+              reference: `Sale #${sale.number}`
+            }
+          });
+        }
+      }
+
+      // Handle stock if transitioning from Confirmed to Cancelled
+      if (status === SaleStatus.Cancelled && sale.status === SaleStatus.Confirmed) {
+        for (const detail of sale.details) {
+          const product = await tx.product.findUnique({ where: { id: detail.productId } });
+          if (!product) throw new Error(`Product ${detail.productId} not found`);
+
+          await tx.product.update({
+            where: { id: detail.productId },
+            data: { stock: { increment: detail.quantity } }
+          });
+
+          await tx.stockMovement.create({
+            data: {
+              productId: detail.productId,
+              type: 'IN',
+              quantity: detail.quantity,
+              stockBefore: product.stock,
+              stockAfter: product.stock + detail.quantity,
+              userId: sale.userId,
+              reference: `Cancellation Sale #${sale.number}`
+            }
+          });
+        }
+      }
+
+      return tx.sale.update({
+        where: { id },
+        data: { status },
+        include: {
+          details: true,
+          customer: true,
+          user: true,
+          paymentMethod: true
+        }
+      }) as unknown as Sale;
+    });
+  }
+}
