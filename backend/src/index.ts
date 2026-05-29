@@ -20,6 +20,18 @@ import {
 import { 
   PrismaErrorLogRepository 
 } from './infrastructure/database/repositories/ErrorLogRepository';
+import { 
+  PrismaPaymentMethodRepository 
+} from './infrastructure/database/repositories/PaymentMethodRepository';
+
+import { oracleDb } from './infrastructure/database/oracle-connection';
+import { OracleCustomerRepository } from './infrastructure/database/repositories/oracle/OracleCustomerRepository';
+import { OracleProductRepository } from './infrastructure/database/repositories/oracle/OracleProductRepository';
+import { OracleSaleRepository } from './infrastructure/database/repositories/oracle/OracleSaleRepository';
+import { OracleUserRepository } from './infrastructure/database/repositories/oracle/OracleUserRepository';
+import { OracleRoleRepository } from './infrastructure/database/repositories/oracle/OracleRoleRepository';
+import { OracleErrorLogRepository } from './infrastructure/database/repositories/oracle/OracleErrorLogRepository';
+import { OraclePaymentMethodRepository } from './infrastructure/database/repositories/oracle/OraclePaymentMethodRepository';
 
 import { 
   LoginUseCase,
@@ -66,12 +78,27 @@ async function startServer() {
   const pdfService = new PDFService();
 
   // Repositories
-  const customerRepo = new PrismaCustomerRepository(prisma);
-  const productRepo = new PrismaProductRepository(prisma);
-  const saleRepo = new PrismaSaleRepository(prisma);
-  const userRepo = new PrismaUserRepository(prisma);
-  const roleRepo = new PrismaRoleRepository(prisma);
-  const errorLogRepo = new PrismaErrorLogRepository(prisma);
+  let customerRepo, productRepo, saleRepo, userRepo, roleRepo, errorLogRepo, paymentMethodRepo;
+
+  if (process.env.DB_PROVIDER === 'oracle') {
+    console.log("🟢 Using ORACLE Database Repositories");
+    customerRepo = new OracleCustomerRepository(oracleDb);
+    productRepo = new OracleProductRepository(oracleDb);
+    saleRepo = new OracleSaleRepository(oracleDb);
+    userRepo = new OracleUserRepository(oracleDb);
+    roleRepo = new OracleRoleRepository(oracleDb);
+    errorLogRepo = new OracleErrorLogRepository(oracleDb);
+    paymentMethodRepo = new OraclePaymentMethodRepository(oracleDb);
+  } else {
+    console.log("🔵 Using MYSQL (Prisma) Database Repositories");
+    customerRepo = new PrismaCustomerRepository(prisma);
+    productRepo = new PrismaProductRepository(prisma);
+    saleRepo = new PrismaSaleRepository(prisma);
+    userRepo = new PrismaUserRepository(prisma);
+    roleRepo = new PrismaRoleRepository(prisma);
+    errorLogRepo = new PrismaErrorLogRepository(prisma);
+    paymentMethodRepo = new PrismaPaymentMethodRepository(prisma);
+  }
 
   // Use Cases
   const logErrorUC = new LogErrorUseCase(errorLogRepo);
@@ -102,7 +129,7 @@ async function startServer() {
   const authController = new AuthController(loginUC);
   const customerController = new CustomerController(listCustomersUC, createCustomerUC, updateCustomerUC, deleteCustomerUC);
   const productController = new ProductController(listProductsUC, createProductUC, updateProductUC, deleteProductUC);
-  const saleController = new SaleController(createSaleUC, listSalesUC, updateSaleStatusUC, getSaleByIdUC, pdfService);
+  const saleController = new SaleController(createSaleUC, listSalesUC, updateSaleStatusUC, getSaleByIdUC, pdfService, paymentMethodRepo);
   const userController = new UserController(listUsersUC, createUserUC, updateUserUC, deleteUserUC);
   const roleController = new RoleController(listRolesUC);
 

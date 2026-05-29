@@ -151,7 +151,9 @@ export const HistoryPage: React.FC = () => {
                 <h2 style={{ margin: 0, fontSize: '1.1rem' }}>POS SYSTEM S.A.</h2>
               </div>
               <div className="text-right">
-                <p style={{ margin: 0, fontWeight: 700 }}>ESTADO: {selectedInvoice.status}</p>
+                <p style={{ margin: 0, fontWeight: 700 }}>
+                  ESTADO: {selectedInvoice.status === 'Confirmed' ? 'CONFIRMADA' : selectedInvoice.status === 'Cancelled' ? 'ANULADA' : 'BORRADOR'}
+                </p>
                 <p className="text-muted" style={{ margin: 0, fontSize: '0.8rem' }}>{new Date(selectedInvoice.date).toLocaleString()}</p>
               </div>
             </div>
@@ -179,7 +181,7 @@ export const HistoryPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {selectedInvoice.details.map((d, i) => (
+                {(selectedInvoice.details || []).map((d, i) => (
                   <tr key={i}>
                     <td>
                       <div style={{ fontWeight: 500 }}>{d.productName}</div>
@@ -190,6 +192,13 @@ export const HistoryPage: React.FC = () => {
                     <td className="text-right" style={{ fontWeight: 600 }}>${d.subtotal.toFixed(2)}</td>
                   </tr>
                 ))}
+                {(!selectedInvoice.details || selectedInvoice.details.length === 0) && (
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted" style={{ padding: '1rem' }}>
+                      No se cargaron los detalles de esta factura.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
             

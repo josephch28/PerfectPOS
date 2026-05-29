@@ -119,7 +119,8 @@ export class PrismaSaleRepository implements ISaleRepository {
         include: {
           customer: true,
           user: true,
-          paymentMethod: true
+          paymentMethod: true,
+          details: true
         },
         orderBy: { date: 'desc' }
       }),

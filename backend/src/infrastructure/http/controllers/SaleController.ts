@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { CreateSaleUseCase, ListSalesUseCase, UpdateSaleStatusUseCase, GetSaleByIdUseCase } from '../../../application/use-cases/index';
 import { PDFService } from '../../pdf/PDFService';
 import { SaleStatus } from '../../../domain/entities/index';
-import { PrismaClient } from '@prisma/client';
+import { IPaymentMethodRepository } from '../../../domain/repositories/index';
 
 export class SaleController {
   constructor(
@@ -10,7 +10,8 @@ export class SaleController {
     private listSales: ListSalesUseCase,
     private updateStatus: UpdateSaleStatusUseCase,
     private getSale: GetSaleByIdUseCase,
-    private pdfService: PDFService
+    private pdfService: PDFService,
+    private paymentMethodRepo: IPaymentMethodRepository
   ) {}
 
   async getSales(req: Request, res: Response) {
@@ -27,11 +28,8 @@ export class SaleController {
       const userId = (req as any).user.id;
       
       // Get Default Payment Method (Cash)
-      const prisma = new PrismaClient();
-      const cashMethod = await prisma.paymentMethod.findFirst({
-        where: { name: { contains: 'Cash' } }
-      });
-      await prisma.$disconnect();
+      const methods = await this.paymentMethodRepo.findAll();
+      const cashMethod = methods.find(m => m.name.toLowerCase().includes('cash'));
 
       if (!cashMethod) throw new Error("Método de pago 'Efectivo' (Cash) no encontrado en el sistema.");
 
