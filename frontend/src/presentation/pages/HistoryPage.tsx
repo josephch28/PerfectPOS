@@ -10,17 +10,31 @@ export const HistoryPage: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [searchField, setSearchField] = useState('number'); 
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
+  // Implement Debounce for search to avoid API spam on fast typing
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // 400ms delay
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1); // Reset to page 1 on new search
+  }, [debouncedSearch, searchField]);
+
   useEffect(() => {
     loadInvoices();
-  }, [page, search, searchField]);
+  }, [page, itemsPerPage, debouncedSearch, searchField]);
 
   const loadInvoices = async () => {
     try {
-      const result = await InvoiceApi.findAll(page, search, searchField);
+      const result = await InvoiceApi.findAll(page, itemsPerPage, debouncedSearch, searchField);
       setInvoices(result.data);
       setTotal(result.total);
     } catch (error) {
@@ -69,7 +83,7 @@ export const HistoryPage: React.FC = () => {
             type="text" 
             placeholder={`Buscar por ${searchField === 'number' ? 'número de factura' : 'nombre del cliente'}...`} 
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => setSearch(e.target.value)}
           />
           <div style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', background: 'var(--slate-50)' }}>
             <Search size={18} color="var(--slate-600)" />
@@ -135,7 +149,16 @@ export const HistoryPage: React.FC = () => {
           </tbody>
         </table>
         
-        <Pagination currentPage={page} totalItems={total} itemsPerPage={10} onPageChange={setPage} />
+        <Pagination 
+          currentPage={page} 
+          totalItems={total} 
+          itemsPerPage={itemsPerPage} 
+          onPageChange={setPage} 
+          onItemsPerPageChange={(limit) => {
+            setItemsPerPage(limit);
+            setPage(1);
+          }}
+        />
       </div>
 
       <Modal 

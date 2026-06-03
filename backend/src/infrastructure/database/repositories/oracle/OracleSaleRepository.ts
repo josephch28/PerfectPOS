@@ -78,25 +78,20 @@ export class OracleSaleRepository implements ISaleRepository {
     return this.fetchFullSale(id, this.knex);
   }
 
-  async findAll(page: number, limit: number, search?: string, searchField?: string): Promise<{ data: Sale[]; total: number }> {
+  async findAll(page: number, limit: number, search?: string, searchField?: string, sellerId?: string): Promise<{ data: Sale[]; total: number }> {
     const offset = (page - 1) * limit;
 
-    let query = this.knex('Sales')
-      .leftJoin('Customers', 'Sales.customerId', 'Customers.id')
-      .leftJoin('Users', 'Sales.userId', 'Users.id')
-      .leftJoin('PaymentMethods', 'Sales.paymentMethodId', 'PaymentMethods.id')
-      .select('Sales.*', {
-        customerName: 'Customers.name',
-        customerLastName: 'Customers.lastName',
-        userUsername: 'Users.username',
-        paymentMethodName: 'PaymentMethods.name'
-      });
+    let idsQuery = this.knex('Sales');
+    let countQuery = this.knex('Sales');
 
-    let countQuery = this.knex('Sales')
-      .leftJoin('Customers', 'Sales.customerId', 'Customers.id')
-      .count({ total: 'Sales.id' });
+    if (sellerId) {
+      idsQuery = idsQuery.where('Sales.userId', sellerId);
+      countQuery = countQuery.where('Sales.userId', sellerId);
+    }
 
     if (search) {
+      idsQuery = idsQuery.leftJoin('Customers', 'Sales.customerId', 'Customers.id');
+      countQuery = countQuery.leftJoin('Customers', 'Sales.customerId', 'Customers.id');
       const searchFn = function(this: any) {
         if (searchField === 'number') {
           this.where('Sales.number', 'like', `${search}%`);
@@ -109,16 +104,35 @@ export class OracleSaleRepository implements ISaleRepository {
               .orWhere('Customers.lastName', 'like', `${search}%`);
         }
       };
-      query.where(searchFn);
-      countQuery.where(searchFn);
+      idsQuery.andWhere(searchFn);
+      countQuery.andWhere(searchFn);
+    }
+    
+    countQuery = countQuery.count({ total: 'Sales.id' });
+    
+    const idsResult = await idsQuery.select('Sales.id').orderBy('Sales.date', 'desc').limit(limit).offset(offset);
+    const saleIds = idsResult.map((row: any) => row.id);
+
+    let data: any[] = [];
+    if (saleIds.length > 0) {
+      data = await this.knex('Sales')
+        .leftJoin('Customers', 'Sales.customerId', 'Customers.id')
+        .leftJoin('Users', 'Sales.userId', 'Users.id')
+        .leftJoin('PaymentMethods', 'Sales.paymentMethodId', 'PaymentMethods.id')
+        .select('Sales.*', {
+          customerName: 'Customers.name',
+          customerLastName: 'Customers.lastName',
+          userUsername: 'Users.username',
+          paymentMethodName: 'PaymentMethods.name'
+        })
+        .whereIn('Sales.id', saleIds)
+        .orderBy('Sales.date', 'desc');
     }
 
-    const data = await query.orderBy('Sales.date', 'desc').limit(limit).offset(offset);
     const totalResult = await countQuery.first();
     const total = totalResult ? Number(totalResult.total) : 0;
 
-    // Fetch details for these 10 sales
-    const saleIds = data.map(row => row.id);
+
     let allDetails: any[] = [];
     if (saleIds.length > 0) {
       allDetails = await this.knex('SaleDetails').whereIn('saleId', saleIds);

@@ -10,8 +10,11 @@ export const UsersPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -31,7 +34,7 @@ export const UsersPage: React.FC = () => {
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, total } = await UserApi.findAll(currentPage, search);
+      const { data, total } = await UserApi.findAll(currentPage, itemsPerPage, search);
       setUsers(data);
       setTotal(total);
     } catch (error) {
@@ -39,7 +42,7 @@ export const UsersPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, search, showToast]);
+  }, [currentPage, itemsPerPage, search, showToast]);
 
   const fetchRoles = useCallback(async () => {
     try {
@@ -99,49 +102,59 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('¿Está seguro de eliminar este usuario?')) {
+  const promptDelete = (id: string) => {
+    setUserToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (userToDelete) {
       try {
-        await UserApi.delete(id);
-        showToast('Usuario eliminado exitosamente', 'success');
+        await UserApi.delete(userToDelete);
+        showToast('Usuario desactivado exitosamente', 'success');
         fetchUsers();
       } catch (error) {
         showToast('Error al eliminar usuario', 'error');
+      } finally {
+        setIsDeleteModalOpen(false);
+        setUserToDelete(null);
       }
     }
   };
 
   return (
-    <div className="container" style={{ paddingTop: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div className="container">
+      <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Gestión de Usuarios</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Administre el acceso de su personal</p>
+          <h1 style={{ margin: 0, fontSize: '2.25rem', fontWeight: 800, color: 'var(--slate-900)' }}>Gestión de Usuarios</h1>
+          <p className="text-muted" style={{ marginTop: '0.5rem' }}>Administre el acceso de su personal</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenModal()} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <Plus size={20} /> Nuevo Usuario
+        <button className="btn-primary" onClick={() => handleOpenModal()} style={{ padding: '0.75rem 1.25rem' }}>
+          <Plus size={18} /> Nuevo Usuario
         </button>
-      </div>
+      </header>
 
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <div style={{ position: 'relative', maxWidth: '400px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-          <input
-            type="text"
-            className="input"
-            style={{ paddingLeft: '40px' }}
-            placeholder="Buscar por nombre o usuario..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
+      <div className="card" style={{ marginBottom: '2rem', padding: '1rem 1.5rem' }}>
+        <div style={{ maxWidth: '400px' }}>
+          <div className="input-group" style={{ borderRadius: '8px' }}>
+            <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+              <Search size={18} color="var(--slate-500)" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o usuario..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
         </div>
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="table">
+        <table className="modern-table">
           <thead>
             <tr>
               <th>Usuario</th>
@@ -149,50 +162,60 @@ export const UsersPage: React.FC = () => {
               <th>Email</th>
               <th>Rol</th>
               <th>Estado</th>
-              <th style={{ textAlign: 'right' }}>Acciones</th>
+              <th className="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Cargando...</td></tr>
+              <tr><td colSpan={6} className="text-center" style={{ padding: '4rem', color: 'var(--slate-300)' }}>Cargando...</td></tr>
             ) : users.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No se encontraron usuarios</td></tr>
+              <tr>
+                <td colSpan={6} className="text-center" style={{ padding: '4rem', color: 'var(--slate-300)' }}>
+                  <UserIcon size={64} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                  <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>No se encontraron usuarios</p>
+                </td>
+              </tr>
             ) : (
               users.map((user) => (
                 <tr key={user.id}>
-                  <td style={{ fontWeight: '500' }}>{user.username}</td>
-                  <td>{user.name} {user.lastName}</td>
-                  <td>{user.email}</td>
+                  <td style={{ fontSize: '0.85rem', color: 'var(--slate-600)', fontWeight: 600 }}>{user.username}</td>
+                  <td>
+                    <div style={{ fontWeight: 600, color: 'var(--slate-900)' }}>{user.name} {user.lastName}</div>
+                  </td>
+                  <td style={{ color: 'var(--slate-600)' }}>{user.email}</td>
                   <td>
                     <span style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '4px', 
-                      background: user.role?.name === 'Administrator' ? '#e0e7ff' : '#f3f4f6',
-                      color: user.role?.name === 'Administrator' ? '#3730a3' : '#374151',
-                      fontSize: '0.875rem',
-                      fontWeight: '500'
+                      padding: '0.35rem 0.75rem', 
+                      borderRadius: '6px', 
+                      background: user.role?.name === 'Administrator' ? '#eef2ff' : '#f8fafc',
+                      color: user.role?.name === 'Administrator' ? '#4f46e5' : '#475569',
+                      fontSize: '0.80rem',
+                      fontWeight: 700,
+                      border: user.role?.name === 'Administrator' ? '1px solid #e0e7ff' : '1px solid var(--slate-200)'
                     }}>
                       {user.role?.name === 'Administrator' ? 'Administrador' : 'Vendedor'}
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, fontSize: '0.85rem' }}>
                       <span style={{ 
                         width: '8px', 
                         height: '8px', 
                         borderRadius: '50%', 
-                        background: user.isActive ? '#10b981' : '#ef4444' 
+                        background: user.isLocked ? 'var(--warning)' : user.isActive ? 'var(--success)' : 'var(--slate-400)'
                       }}></span>
-                      {user.isLocked ? 'Bloqueado' : user.isActive ? 'Activo' : 'Inactivo'}
+                      <span style={{ color: user.isLocked ? 'var(--warning)' : user.isActive ? 'var(--success)' : 'var(--slate-600)' }}>
+                        {user.isLocked ? 'Bloqueado' : user.isActive ? 'Activo' : 'Inactivo'}
+                      </span>
                     </div>
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td className="text-right">
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button className="btn btn-secondary" onClick={() => handleOpenModal(user)} title="Editar">
-                        <Edit2 size={16} />
+                      <button className="btn-secondary" onClick={() => handleOpenModal(user)} title="Editar" style={{ padding: '0.5rem' }}>
+                        <Edit2 size={16} color="var(--primary)" />
                       </button>
-                      <button className="btn btn-danger" onClick={() => handleDelete(user.id)} title="Eliminar">
-                        <Trash2 size={16} />
+                      <button className="btn-secondary" onClick={() => promptDelete(user.id)} title="Eliminar" style={{ padding: '0.5rem' }}>
+                        <Trash2 size={16} color="var(--danger)" />
                       </button>
                     </div>
                   </td>
@@ -206,8 +229,12 @@ export const UsersPage: React.FC = () => {
       <Pagination
         currentPage={currentPage}
         totalItems={total}
-        itemsPerPage={10}
+        itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(limit) => {
+          setItemsPerPage(limit);
+          setCurrentPage(1);
+        }}
       />
 
       <Modal
@@ -216,72 +243,83 @@ export const UsersPage: React.FC = () => {
         title={editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
       >
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Usuario</label>
-              <div style={{ position: 'relative' }}>
-                <UserIcon size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Usuario</label>
+              <div className="input-group">
+                <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                  <UserIcon size={18} color="var(--slate-500)" />
+                </div>
                 <input
                   type="text"
-                  className="input"
-                  style={{ paddingLeft: '40px' }}
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   placeholder="usuario123"
                   required
+                  pattern="[A-Za-z0-9_]+"
+                  title="Solo letras, números y guión bajo"
                 />
               </div>
             </div>
-            <div className="form-group">
-              <label>Cédula</label>
-              <div style={{ position: 'relative' }}>
-                <CreditCard size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Cédula</label>
+              <div className="input-group">
+                <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                  <CreditCard size={18} color="var(--slate-500)" />
+                </div>
                 <input
                   type="text"
-                  className="input"
-                  style={{ paddingLeft: '40px' }}
                   value={formData.cedula}
                   onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
                   placeholder="1712345678"
                   required
+                  pattern="\d{10}"
+                  maxLength={10}
+                  title="Debe contener exactamente 10 dígitos numéricos"
                 />
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Nombre</label>
-              <input
-                type="text"
-                className="input"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Nombre"
-                required
-              />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Nombre</label>
+              <div className="input-group">
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Nombre"
+                  required
+                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
+                  title="Solo letras y espacios permitidos"
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label>Apellido</label>
-              <input
-                type="text"
-                className="input"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                placeholder="Apellido"
-                required
-              />
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Apellido</label>
+              <div className="input-group">
+                <input
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  placeholder="Apellido"
+                  required
+                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
+                  title="Solo letras y espacios permitidos"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Email</label>
-            <div style={{ position: 'relative' }}>
-              <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Email</label>
+            <div className="input-group">
+              <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                <Mail size={18} color="var(--slate-500)" />
+              </div>
               <input
                 type="email"
-                className="input"
-                style={{ paddingLeft: '40px' }}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="correo@ejemplo.com"
@@ -290,14 +328,14 @@ export const UsersPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Contraseña {editingUser && '(Dejar en blanco para no cambiar)'}</label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Contraseña {editingUser && '(Dejar en blanco para no cambiar)'}</label>
+            <div className="input-group">
+              <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                <Lock size={18} color="var(--slate-500)" />
+              </div>
               <input
                 type="password"
-                className="input"
-                style={{ paddingLeft: '40px' }}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="••••••••"
@@ -306,16 +344,17 @@ export const UsersPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Rol de Usuario</label>
-            <div style={{ position: 'relative' }}>
-              <Shield size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Rol de Usuario</label>
+            <div className="input-group">
+              <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                <Shield size={18} color="var(--slate-500)" />
+              </div>
               <select 
-                className="input" 
-                style={{ paddingLeft: '40px' }}
                 value={formData.roleId}
                 onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
                 required
+                style={{ flex: 1, padding: '0.75rem 1rem', border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer', fontSize: '0.95rem' }}
               >
                 <option value="">Seleccione un rol</option>
                 {roles.map(role => (
@@ -325,32 +364,53 @@ export const UsersPage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', gap: '2rem', padding: '1.5rem', background: 'var(--slate-50)', borderRadius: '8px', border: '1px solid var(--slate-200)', marginBottom: '2rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600, color: 'var(--slate-800)' }}>
               <input
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                style={{ width: '1.2rem', height: '1.2rem', accentColor: 'var(--primary)' }}
               />
               Usuario Activo
             </label>
             {editingUser && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600, color: 'var(--slate-800)' }}>
                 <input
                   type="checkbox"
                   checked={formData.isLocked}
                   onChange={(e) => setFormData({ ...formData, isLocked: e.target.checked })}
+                  style={{ width: '1.2rem', height: '1.2rem', accentColor: 'var(--danger)' }}
                 />
                 Bloqueado
               </label>
             )}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-            <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-            <button type="submit" className="btn btn-primary">Guardar Usuario</button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--slate-200)' }}>
+            <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} style={{ padding: '0.75rem 1.5rem' }}>Cancelar</button>
+            <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem' }}>Guardar Usuario</button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirmar Desactivación"
+      >
+        <div style={{ padding: '1rem 0' }}>
+          <p style={{ color: 'var(--slate-700)', fontSize: '1.05rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+            ¿Está seguro que desea eliminar este usuario? <br/><br/>
+            <span className="text-muted" style={{ fontSize: '0.9rem' }}>Nota: Los usuarios no se borran permanentemente por razones de auditoría, pasarán a estar desactivados.</span>
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+            <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+            <button className="btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={handleDelete}>
+              Sí, proceder
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

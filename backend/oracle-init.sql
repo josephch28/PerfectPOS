@@ -169,10 +169,13 @@ CREATE TABLE "ErrorLogs" (
 
 -- Create Indexes for performance
 CREATE INDEX idx_users_username ON "Users"("username");
+CREATE INDEX "IDX_Users_Active_Username" ON "Users"("isActive", "username");
 CREATE INDEX idx_users_email ON "Users"("email");
 CREATE INDEX idx_customers_name ON "Customers"("name");
 CREATE INDEX idx_customers_lastName ON "Customers"("lastName");
+CREATE INDEX "IDX_Customers_Active_LastName" ON "Customers"("isActive", "lastName");
 CREATE INDEX idx_products_name ON "Products"("name");
+CREATE INDEX "IDX_Products_Active_Name" ON "Products"("isActive", "name");
 CREATE INDEX idx_products_code ON "Products"("code");
 CREATE INDEX idx_sales_number ON "Sales"("number");
 CREATE INDEX idx_sales_date ON "Sales"("date");

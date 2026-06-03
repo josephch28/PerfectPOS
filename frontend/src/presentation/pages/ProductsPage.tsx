@@ -9,8 +9,11 @@ export const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -28,7 +31,7 @@ export const ProductsPage: React.FC = () => {
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, total } = await ProductApi.findAll(currentPage, search, 'name', true);
+      const { data, total } = await ProductApi.findAll(currentPage, itemsPerPage, search, 'name', true);
       setProducts(data);
       setTotal(total);
     } catch (error) {
@@ -36,7 +39,7 @@ export const ProductsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, search, showToast]);
+  }, [currentPage, itemsPerPage, search, showToast]);
 
   useEffect(() => {
     fetchProducts();
@@ -77,101 +80,114 @@ export const ProductsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('¿Está seguro de eliminar este producto?')) {
+  const promptDelete = (id: string) => {
+    setProductToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (productToDelete) {
       try {
-        await ProductApi.delete(id);
-        showToast('Producto eliminado exitosamente', 'success');
+        await ProductApi.delete(productToDelete);
+        showToast('Producto procesado exitosamente', 'success');
         fetchProducts();
       } catch (error) {
         showToast('Error al eliminar producto', 'error');
+      } finally {
+        setIsDeleteModalOpen(false);
+        setProductToDelete(null);
       }
     }
   };
 
   return (
-    <div className="container" style={{ paddingTop: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div className="container">
+      <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Gestión de Productos</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Administre su inventario y precios</p>
+          <h1 style={{ margin: 0, fontSize: '2.25rem', fontWeight: 800, color: 'var(--slate-900)' }}>Gestión de Productos</h1>
+          <p className="text-muted" style={{ marginTop: '0.5rem' }}>Administre su inventario y precios</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenModal()} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <Plus size={20} /> Nuevo Producto
+        <button className="btn-primary" onClick={() => handleOpenModal()} style={{ padding: '0.75rem 1.25rem' }}>
+          <Plus size={18} /> Nuevo Producto
         </button>
-      </div>
+      </header>
 
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <div style={{ position: 'relative', maxWidth: '400px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-          <input
-            type="text"
-            className="input"
-            style={{ paddingLeft: '40px' }}
-            placeholder="Buscar por nombre o código..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
+      <div className="card" style={{ marginBottom: '2rem', padding: '1rem 1.5rem' }}>
+        <div style={{ maxWidth: '400px' }}>
+          <div className="input-group" style={{ borderRadius: '8px' }}>
+            <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+              <Search size={18} color="var(--slate-500)" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o código..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
         </div>
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="table">
+        <table className="modern-table">
           <thead>
             <tr>
               <th>Código</th>
               <th>Nombre del Producto</th>
-              <th>Precio</th>
-              <th>Stock</th>
-              <th>IVA</th>
-              <th>Estado</th>
-              <th style={{ textAlign: 'right' }}>Acciones</th>
+              <th className="text-right">Precio</th>
+              <th className="text-right">Stock</th>
+              <th className="text-center">IVA</th>
+              <th className="text-center">Estado</th>
+              <th className="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>Cargando...</td></tr>
+              <tr><td colSpan={7} className="text-center" style={{ padding: '4rem', color: 'var(--slate-300)' }}>Cargando...</td></tr>
             ) : products.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>No se encontraron productos</td></tr>
+              <tr>
+                <td colSpan={7} className="text-center" style={{ padding: '4rem', color: 'var(--slate-300)' }}>
+                  <Package size={64} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                  <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>No se encontraron productos</p>
+                </td>
+              </tr>
             ) : (
               products.map((product) => (
                 <tr key={product.id}>
-                  <td style={{ fontWeight: '500' }}>{product.code}</td>
-                  <td>{product.name}</td>
-                  <td>${product.price.toFixed(2)}</td>
+                  <td style={{ fontSize: '0.85rem', color: 'var(--slate-600)', fontWeight: 600 }}>{product.code}</td>
                   <td>
+                    <div style={{ fontWeight: 600, color: 'var(--slate-900)' }}>{product.name}</div>
+                  </td>
+                  <td className="text-right" style={{ color: 'var(--slate-600)', fontWeight: 600 }}>${product.price.toFixed(2)}</td>
+                  <td className="text-right">
                     <span style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '4px', 
-                      background: product.stock <= 5 ? '#fee2e2' : '#f0fdf4',
-                      color: product.stock <= 5 ? '#991b1b' : '#166534',
-                      fontWeight: 'bold'
+                      padding: '0.35rem 0.75rem', 
+                      borderRadius: '6px', 
+                      background: product.stock <= 5 ? '#fff1f2' : '#f8fafc',
+                      color: product.stock <= 5 ? '#be123c' : '#0f172a',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      border: product.stock <= 5 ? '1px solid #ffe4e6' : '1px solid var(--slate-200)'
                     }}>
                       {product.stock}
                     </span>
                   </td>
-                  <td>{product.appliesIva ? 'Sí' : 'No'}</td>
-                  <td>
-                    <span style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '4px', 
-                      background: product.isActive ? '#f0fdf4' : '#f1f5f9',
-                      color: product.isActive ? '#166534' : '#64748b',
-                      fontSize: '0.875rem'
-                    }}>
+                  <td className="text-center" style={{ color: 'var(--slate-600)' }}>{product.appliesIva ? '15%' : '0%'}</td>
+                  <td className="text-center">
+                    <span className={product.isActive ? 'badge badge-active' : 'badge badge-void'}>
                       {product.isActive ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td className="text-right">
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button className="btn btn-secondary" onClick={() => handleOpenModal(product)} title="Editar">
-                        <Edit2 size={16} />
+                      <button className="btn-secondary" onClick={() => handleOpenModal(product)} title="Editar" style={{ padding: '0.5rem' }}>
+                        <Edit2 size={16} color="var(--primary)" />
                       </button>
-                      <button className="btn btn-danger" onClick={() => handleDelete(product.id)} title="Eliminar">
-                        <Trash2 size={16} />
+                      <button className="btn-secondary" onClick={() => promptDelete(product.id)} title="Eliminar" style={{ padding: '0.5rem' }}>
+                        <Trash2 size={16} color="var(--danger)" />
                       </button>
                     </div>
                   </td>
@@ -185,8 +201,12 @@ export const ProductsPage: React.FC = () => {
       <Pagination
         currentPage={currentPage}
         totalItems={total}
-        itemsPerPage={10}
+        itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(limit) => {
+          setItemsPerPage(limit);
+          setCurrentPage(1);
+        }}
       />
 
       <Modal
@@ -195,14 +215,14 @@ export const ProductsPage: React.FC = () => {
         title={editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
       >
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Código de Producto</label>
-            <div style={{ position: 'relative' }}>
-              <Hash size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Código de Producto</label>
+            <div className="input-group">
+              <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                <Hash size={18} color="var(--slate-500)" />
+              </div>
               <input
                 type="text"
-                className="input"
-                style={{ paddingLeft: '40px' }}
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 placeholder="Ej: PROD-001"
@@ -211,14 +231,14 @@ export const ProductsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Nombre</label>
-            <div style={{ position: 'relative' }}>
-              <Package size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Nombre</label>
+            <div className="input-group">
+              <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                <Package size={18} color="var(--slate-500)" />
+              </div>
               <input
                 type="text"
-                className="input"
-                style={{ paddingLeft: '40px' }}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Nombre descriptivo"
@@ -227,16 +247,17 @@ export const ProductsPage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Precio</label>
-              <div style={{ position: 'relative' }}>
-                <DollarSign size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Precio</label>
+              <div className="input-group">
+                <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                  <DollarSign size={18} color="var(--slate-500)" />
+                </div>
                 <input
                   type="number"
                   step="0.01"
-                  className="input"
-                  style={{ paddingLeft: '40px' }}
+                  min="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
                   placeholder="0.00"
@@ -244,14 +265,15 @@ export const ProductsPage: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="form-group">
-              <label>Stock Inicial</label>
-              <div style={{ position: 'relative' }}>
-                <Database size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Stock Inicial</label>
+              <div className="input-group">
+                <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                  <Database size={18} color="var(--slate-500)" />
+                </div>
                 <input
                   type="number"
-                  className="input"
-                  style={{ paddingLeft: '40px' }}
+                  min="0"
                   value={formData.stock}
                   onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
                   placeholder="0"
@@ -261,30 +283,51 @@ export const ProductsPage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem', marginBottom: '1.5rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', gap: '2rem', padding: '1.5rem', background: 'var(--slate-50)', borderRadius: '8px', border: '1px solid var(--slate-200)', marginBottom: '2rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600, color: 'var(--slate-800)' }}>
               <input
                 type="checkbox"
                 checked={formData.appliesIva}
                 onChange={(e) => setFormData({ ...formData, appliesIva: e.target.checked })}
+                style={{ width: '1.2rem', height: '1.2rem', accentColor: 'var(--primary)' }}
               />
               Aplica IVA (15%)
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600, color: 'var(--slate-800)' }}>
               <input
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                style={{ width: '1.2rem', height: '1.2rem', accentColor: 'var(--primary)' }}
               />
               Producto Activo
             </label>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-            <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-            <button type="submit" className="btn btn-primary">Guardar Producto</button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--slate-200)' }}>
+            <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} style={{ padding: '0.75rem 1.5rem' }}>Cancelar</button>
+            <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem' }}>Guardar Producto</button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirmar Eliminación"
+      >
+        <div style={{ padding: '1rem 0' }}>
+          <p style={{ color: 'var(--slate-700)', fontSize: '1.05rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+            ¿Está seguro que desea eliminar este producto? <br/><br/>
+            <span className="text-muted" style={{ fontSize: '0.9rem' }}>Nota: Si el producto tiene transacciones de ventas asociadas, no se borrará de la base de datos, solo será desactivado para mantener el historial intacto.</span>
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+            <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+            <button className="btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={handleDelete}>
+              Sí, proceder
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

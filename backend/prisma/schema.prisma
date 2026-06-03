@@ -36,6 +36,7 @@ model User {
   updatedAt     DateTime        @updatedAt
 
   @@index([username])
+  @@index([isActive, username])
   @@index([email])
 }
 
@@ -53,6 +54,7 @@ model Customer {
 
   @@index([name])
   @@index([lastName])
+  @@index([isActive, lastName])
 }
 
 model Product {
@@ -69,6 +71,7 @@ model Product {
   updatedAt      DateTime        @updatedAt
 
   @@index([name])
+  @@index([isActive, name])
   @@index([code])
 }
 

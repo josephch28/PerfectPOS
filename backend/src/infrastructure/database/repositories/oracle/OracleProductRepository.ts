@@ -12,8 +12,8 @@ export class OracleProductRepository implements IProductRepository {
     let countQuery = this.knex('Products').count('* as total');
 
     if (!includeInactive) {
-      query = query.where('isActive', 1).andWhere('stock', '>', 0);
-      countQuery = countQuery.where('isActive', 1).andWhere('stock', '>', 0);
+      query = query.where('isActive', 1);
+      countQuery = countQuery.where('isActive', 1);
     }
 
     if (search) {
@@ -40,9 +40,31 @@ export class OracleProductRepository implements IProductRepository {
       });
     }
 
-    const data = await query.orderBy('name', 'asc').limit(limit).offset(offset);
     const totalResult = await countQuery.first();
     const total = totalResult ? Number(totalResult.total) : 0;
+
+    if (total === 0 || offset >= total) {
+      return { data: [], total };
+    }
+
+    let actualOffset = offset;
+    let actualLimit = limit;
+    let sortDir = 'asc';
+
+    if (offset > total / 2) {
+      actualLimit = Math.min(limit, total - offset);
+      actualOffset = total - offset - actualLimit;
+      sortDir = 'desc';
+    }
+
+    const idsQuery = query.clone().select('id').orderBy('name', sortDir).limit(actualLimit).offset(actualOffset);
+    const idsResult = await idsQuery;
+    const ids = idsResult.map((row: any) => row.id);
+
+    let data: any[] = [];
+    if (ids.length > 0) {
+      data = await this.knex('Products').whereIn('id', ids).orderBy('name', 'asc');
+    }
 
     return { 
       data: data.map(this.mapToProduct), 

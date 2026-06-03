@@ -21,6 +21,8 @@ export const InvoicePage: React.FC = () => {
   const [iva, setIva] = useState(0);
   const [total, setTotal] = useState(0);
 
+
+
   useEffect(() => {
     const totalSub = details.reduce((acc, d) => acc + d.subtotal, 0);
     const totalIva = details.reduce((acc, d) => acc + ((d as any).ivaAmount || 0), 0);
@@ -282,6 +284,7 @@ export const InvoicePage: React.FC = () => {
               )}
             </tbody>
           </table>
+
         </section>
 
         <aside style={{ position: 'sticky', top: '2rem' }}>

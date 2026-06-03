@@ -22,7 +22,7 @@ export interface IProductRepository extends IBaseRepository<Product> {
 export interface ISaleRepository {
   create(sale: Sale): Promise<Sale>;
   findById(id: number): Promise<Sale | null>;
-  findAll(page: number, limit: number, search?: string, searchField?: string): Promise<{ data: Sale[], total: number }>;
+  findAll(page: number, limit: number, search?: string, searchField?: string, sellerId?: string): Promise<{ data: Sale[], total: number }>;
   getLastNumber(): Promise<number>;
   updateStatus(id: number, status: string): Promise<Sale>;
 }

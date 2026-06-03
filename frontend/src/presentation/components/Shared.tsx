@@ -30,13 +30,15 @@ interface PaginationProps {
   totalItems: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
+  onItemsPerPageChange?: (limit: number) => void;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({ 
   currentPage, 
   totalItems, 
   itemsPerPage, 
-  onPageChange 
+  onPageChange,
+  onItemsPerPageChange
 }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   
@@ -87,26 +89,51 @@ export const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="pagination-container">
-      <button 
-        disabled={currentPage === 1} 
-        onClick={() => onPageChange(currentPage - 1)}
-        className="pagination-button"
-        title="Anterior"
-      >
-        <ChevronLeft size={20} />
-      </button>
-      
-      {renderPageButtons()}
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--slate-100)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span style={{ fontSize: '0.85rem', color: 'var(--slate-600)', fontWeight: 500 }}>Filas por página:</span>
+        <select 
+          className="input-group" 
+          style={{ padding: '0.35rem 0.5rem', fontSize: '0.85rem', borderRadius: '6px', border: '1px solid var(--slate-200)', background: 'white', cursor: 'pointer', outline: 'none' }}
+          value={itemsPerPage}
+          onChange={(e) => {
+            if (onItemsPerPageChange) {
+              onItemsPerPageChange(Number(e.target.value));
+            }
+          }}
+          disabled={!onItemsPerPageChange}
+        >
+          <option value={10}>10</option>
+          <option value={15}>15</option>
+          <option value={20}>20</option>
+          <option value={30}>30</option>
+        </select>
+        <span style={{ fontSize: '0.85rem', color: 'var(--slate-600)', marginLeft: '1rem' }}>
+          Mostrando {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems}
+        </span>
+      </div>
 
-      <button 
-        disabled={currentPage === totalPages} 
-        onClick={() => onPageChange(currentPage + 1)}
-        className="pagination-button"
-        title="Siguiente"
-      >
-        <ChevronRight size={20} />
-      </button>
+      <div className="pagination-container" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+        <button 
+          disabled={currentPage === 1} 
+          onClick={() => onPageChange(currentPage - 1)}
+          className="pagination-button"
+          title="Anterior"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        
+        {renderPageButtons()}
+
+        <button 
+          disabled={currentPage === totalPages} 
+          onClick={() => onPageChange(currentPage + 1)}
+          className="pagination-button"
+          title="Siguiente"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
     </div>
   );
 };

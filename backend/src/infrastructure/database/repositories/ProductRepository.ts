@@ -23,7 +23,6 @@ export class PrismaProductRepository implements IProductRepository {
 
     if (!includeInactive) {
       where.isActive = true;
-      where.stock = { gt: 0 };
     }
 
     if (search) {
@@ -39,15 +38,38 @@ export class PrismaProductRepository implements IProductRepository {
       }
     }
 
-    const [data, total] = await Promise.all([
-      this.prisma.product.findMany({
-        skip,
-        take: limit,
-        where,
+    const total = await this.prisma.product.count({ where });
+
+    if (total === 0 || skip >= total) {
+      return { data: [], total };
+    }
+
+    let actualSkip = skip;
+    let actualTake = limit;
+    let sortDir = 'asc';
+
+    if (skip > total / 2) {
+      actualTake = Math.min(limit, total - skip);
+      actualSkip = total - skip - actualTake;
+      sortDir = 'desc';
+    }
+
+    const idsResult = await this.prisma.product.findMany({
+      skip: actualSkip,
+      take: actualTake,
+      select: { id: true },
+      where,
+      orderBy: { name: sortDir as any }
+    });
+
+    let data: any[] = [];
+    if (idsResult.length > 0) {
+      const ids = idsResult.map(p => p.id);
+      data = await this.prisma.product.findMany({
+        where: { id: { in: ids } },
         orderBy: { name: 'asc' }
-      }),
-      this.prisma.product.count({ where })
-    ]);
+      });
+    }
 
     return { data: data.map(p => this.mapToProduct(p)), total };
   }

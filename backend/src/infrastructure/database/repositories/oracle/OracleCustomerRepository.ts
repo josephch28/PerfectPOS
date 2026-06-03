@@ -48,9 +48,31 @@ export class OracleCustomerRepository implements ICustomerRepository {
       });
     }
 
-    const data = await query.orderBy('lastName', 'asc').limit(limit).offset(offset);
     const totalResult = await countQuery.first();
     const total = totalResult ? Number(totalResult.total) : 0;
+
+    if (total === 0 || offset >= total) {
+      return { data: [], total };
+    }
+
+    let actualOffset = offset;
+    let actualLimit = limit;
+    let sortDir = 'asc';
+
+    if (offset > total / 2) {
+      actualLimit = Math.min(limit, total - offset);
+      actualOffset = total - offset - actualLimit;
+      sortDir = 'desc';
+    }
+
+    const idsQuery = query.clone().select('id').orderBy('lastName', sortDir).limit(actualLimit).offset(actualOffset);
+    const idsResult = await idsQuery;
+    const ids = idsResult.map((row: any) => row.id);
+
+    let data: any[] = [];
+    if (ids.length > 0) {
+      data = await this.knex('Customers').whereIn('id', ids).orderBy('lastName', 'asc');
+    }
 
     return { 
       data: data.map(this.mapToCustomer), 

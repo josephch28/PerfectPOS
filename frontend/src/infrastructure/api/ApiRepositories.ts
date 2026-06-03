@@ -22,9 +22,9 @@ export const AuthApi = {
 };
 
 export const UserApi = {
-  findAll: async (page: number, search?: string, searchField?: string) => {
+  findAll: async (page: number, limit: number = 10, search?: string, searchField?: string) => {
     const response = await api.get<{ data: User[], total: number }>('/users', {
-      params: { page, limit: 10, search, searchField }
+      params: { page, limit, search, searchField }
     });
     return response.data;
   },
@@ -40,15 +40,15 @@ export const UserApi = {
     await api.delete(`/users/${id}`);
   },
   getRoles: async () => {
-    const response = await api.get<Role[]>('/users/roles');
+    const response = await api.get<Role[]>('/roles');
     return response.data;
   }
 };
 
 export const ClientApi = {
-  findAll: async (page: number, search?: string, searchField?: string) => {
+  findAll: async (page: number, limit: number = 10, search?: string, searchField?: string) => {
     const response = await api.get<{ data: Client[], total: number }>('/customers', {
-      params: { page, limit: 10, search, searchField }
+      params: { page, limit, search, searchField }
     });
     return response.data;
   },
@@ -66,9 +66,9 @@ export const ClientApi = {
 };
 
 export const ProductApi = {
-  findAll: async (page: number, search?: string, searchField?: string, includeInactive = false) => {
+  findAll: async (page: number, limit: number = 10, search?: string, searchField?: string, includeInactive = false) => {
     const response = await api.get<{ data: Product[], total: number }>('/products', {
-      params: { page, limit: 10, search, searchField, includeInactive }
+      params: { page, limit, search, searchField, includeInactive }
     });
     return response.data;
   },
@@ -86,9 +86,9 @@ export const ProductApi = {
 };
 
 export const InvoiceApi = {
-  findAll: async (page: number, search?: string, searchField?: string) => {
+  findAll: async (page: number, limit: number = 10, search?: string, searchField?: string) => {
     const response = await api.get<{ data: Invoice[], total: number }>('/sales', {
-      params: { page, limit: 10, search, searchField }
+      params: { page, limit, search, searchField }
     });
     return response.data;
   },

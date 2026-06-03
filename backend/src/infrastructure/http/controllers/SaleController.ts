@@ -19,7 +19,14 @@ export class SaleController {
     const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search as string;
     const searchField = req.query.searchField as string;
-    const result = await this.listSales.execute(page, limit, search, searchField);
+    
+    const user = (req as any).user;
+    let sellerId: string | undefined = undefined;
+    if (user && user.role !== 'Administrator') {
+      sellerId = user.id;
+    }
+
+    const result = await this.listSales.execute(page, limit, search, searchField, sellerId);
     res.json(result);
   }
 

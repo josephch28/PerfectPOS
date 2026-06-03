@@ -50,16 +50,26 @@ export class PrismaUserRepository implements IUserRepository {
       }
     }
 
-    const [data, total] = await Promise.all([
+    const [idsResult, total] = await Promise.all([
       this.prisma.user.findMany({
         skip,
         take: limit,
+        select: { id: true },
         where,
-        include: { role: true },
         orderBy: { username: 'asc' }
       }),
       this.prisma.user.count({ where })
     ]);
+
+    let data: any[] = [];
+    if (idsResult.length > 0) {
+      const ids = idsResult.map(u => u.id);
+      data = await this.prisma.user.findMany({
+        where: { id: { in: ids } },
+        include: { role: true },
+        orderBy: { username: 'asc' }
+      });
+    }
 
     return { data: data.map(u => this.mapToUser(u)), total };
   }

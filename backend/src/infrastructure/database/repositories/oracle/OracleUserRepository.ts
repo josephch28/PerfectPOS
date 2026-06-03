@@ -35,12 +35,42 @@ export class OracleUserRepository implements IUserRepository {
       countQuery.andWhere(searchFn);
     }
 
-    const data = await query.orderBy('Users.createdAt', 'desc').limit(limit).offset(offset);
+    const idsQuery = this.knex('Users').select('Users.id');
+    if (!includeInactive) idsQuery.where('Users.isActive', 1);
+    if (search) {
+      const searchFn = function(this: any) {
+        if (searchField === 'username') {
+          this.where('Users.username', 'like', `${search}%`);
+        } else if (searchField === 'email') {
+          this.where('Users.email', 'like', `${search}%`);
+        } else if (searchField === 'name') {
+          this.where('Users.name', 'like', `${search}%`).orWhere('Users.lastName', 'like', `${search}%`);
+        } else {
+          this.where('Users.username', 'like', `${search}%`)
+              .orWhere('Users.email', 'like', `${search}%`)
+              .orWhere('Users.name', 'like', `${search}%`)
+              .orWhere('Users.lastName', 'like', `${search}%`);
+        }
+      };
+      idsQuery.andWhere(searchFn);
+    }
+
+    const idsResult = await idsQuery.orderBy('Users.createdAt', 'desc').limit(limit).offset(offset);
+    const ids = idsResult.map((row: any) => row.id);
+
+    let data: any[] = [];
+    if (ids.length > 0) {
+      data = await this.knex('Users').leftJoin('Roles', 'Users.roleId', 'Roles.id')
+        .select('Users.*', { roleName: 'Roles.name' })
+        .whereIn('Users.id', ids)
+        .orderBy('Users.createdAt', 'desc');
+    }
+
     const totalResult = await countQuery.first();
     const total = totalResult ? Number(totalResult.total) : 0;
 
     return {
-      data: data.map(this.mapToUser),
+      data: data.map(this.mapToUser.bind(this)),
       total
     };
   }

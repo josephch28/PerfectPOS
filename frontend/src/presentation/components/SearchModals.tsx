@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { Client, Product } from '../../domain/entities';
 import { ClientApi, ProductApi } from '../../infrastructure/api/ApiRepositories';
 import { Modal, Pagination } from './Shared';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, Plus, User, Phone, MapPin, Mail, CreditCard } from 'lucide-react';
+import { useToast } from './Toast';
 
 interface ClientSearchModalProps {
   isOpen: boolean;
@@ -17,6 +18,12 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
   const [search, setSearch] = useState('');
   const [searchField, setSearchField] = useState('name'); 
   const [loading, setLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const { showToast } = useToast();
+
+  const [formData, setFormData] = useState<Client>({
+    id: '', name: '', lastName: '', phone: '', address: '', email: '', isActive: true
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -27,7 +34,7 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
   const loadClients = async () => {
     setLoading(true);
     try {
-      const result = await ClientApi.findAll(page, search, searchField);
+      const result = await ClientApi.findAll(page, 10, search, searchField);
       setClients(result.data || []);
       setTotal(result.total || 0);
     } catch (error) {
@@ -43,23 +50,41 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
     cedula: 'Cédula/ID'
   };
 
+  const handleCreateCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const newCustomer = await ClientApi.create(formData);
+      showToast('Cliente creado exitosamente', 'success');
+      setIsCreating(false);
+      onSelect(newCustomer);
+    } catch (error: any) {
+      showToast(error.response?.data?.message || 'Error al guardar cliente', 'error');
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Buscar Cliente">
-      <div className="input-group">
-        <select value={searchField} onChange={(e) => setSearchField(e.target.value)}>
-          <option value="name">Nombre</option>
-          <option value="lastName">Apellido</option>
-          <option value="cedula">Cédula/ID</option>
-        </select>
-        <input 
-          type="text" 
-          placeholder={`Buscar por ${fieldLabels[searchField]}...`} 
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        />
-        <div style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', background: 'var(--slate-50)' }}>
-          {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} color="var(--slate-600)" />}
+    <>
+    <Modal isOpen={isOpen && !isCreating} onClose={onClose} title="Buscar Cliente">
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <div className="input-group" style={{ flex: 1, marginRight: '1rem', marginBottom: 0 }}>
+          <select value={searchField} onChange={(e) => setSearchField(e.target.value)}>
+            <option value="name">Nombre</option>
+            <option value="lastName">Apellido</option>
+            <option value="cedula">Cédula/ID</option>
+          </select>
+          <input 
+            type="text" 
+            placeholder={`Buscar por ${fieldLabels[searchField]}...`} 
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          />
+          <div style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', background: 'var(--slate-50)' }}>
+            {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} color="var(--slate-600)" />}
+          </div>
         </div>
+        <button className="btn-primary" onClick={() => setIsCreating(true)} style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Plus size={18} /> Nuevo
+        </button>
       </div>
 
       <table className="modal-table">
@@ -76,7 +101,6 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
               <td style={{ fontWeight: 600 }}>{c.id}</td>
               <td style={{ fontWeight: 500 }}>{c.name} {c.lastName}</td>
               <td className="text-center">
-
                 <button onClick={() => onSelect(c)} className="btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
                   Seleccionar
                 </button>
@@ -85,13 +109,130 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
           ))}
           {!loading && clients.length === 0 && (
             <tr>
-              <td colSpan={3} className="text-center text-muted" style={{ padding: '2rem' }}>No se encontraron clientes. Verifique que XAMPP esté iniciado.</td>
+              <td colSpan={3} className="text-center text-muted" style={{ padding: '2rem' }}>No se encontraron clientes.</td>
             </tr>
           )}
         </tbody>
       </table>
       <Pagination currentPage={page} totalItems={total} itemsPerPage={10} onPageChange={setPage} />
     </Modal>
+
+    <Modal isOpen={isCreating} onClose={() => setIsCreating(false)} title="Nuevo Cliente">
+      <form onSubmit={handleCreateCustomer}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Cédula/RUC</label>
+            <div className="input-group">
+              <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                <CreditCard size={18} color="var(--slate-500)" />
+              </div>
+                <input
+                  type="text"
+                  value={formData.id}
+                  onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                  placeholder="Ej: 1712345678"
+                  required
+                  pattern="\d{10}"
+                  maxLength={10}
+                  title="Debe contener exactamente 10 dígitos numéricos"
+                />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Nombre</label>
+              <div className="input-group">
+                <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                  <User size={18} color="var(--slate-500)" />
+                </div>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Nombre"
+                  required
+                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
+                  title="Solo letras y espacios permitidos"
+                />
+              </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Apellido</label>
+              <div className="input-group">
+                <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                  <User size={18} color="var(--slate-500)" />
+                </div>
+                <input
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  placeholder="Apellido"
+                  required
+                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
+                  title="Solo letras y espacios permitidos"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Teléfono</label>
+            <div className="input-group">
+              <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                <Phone size={18} color="var(--slate-500)" />
+              </div>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="Ej: 0991234567"
+                required
+                pattern="\d{10}"
+                maxLength={10}
+                title="Debe contener exactamente 10 dígitos numéricos"
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Email</label>
+            <div className="input-group">
+              <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                <Mail size={18} color="var(--slate-500)" />
+              </div>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="correo@ejemplo.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Dirección</label>
+            <div className="input-group">
+              <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                <MapPin size={18} color="var(--slate-500)" />
+              </div>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="Dirección domiciliaria"
+                required
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--slate-200)' }}>
+            <button type="button" className="btn-secondary" onClick={() => setIsCreating(false)} style={{ padding: '0.75rem 1.5rem' }}>Cancelar</button>
+            <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem' }}>Guardar y Seleccionar</button>
+          </div>
+        </form>
+    </Modal>
+    </>
   );
 };
 
@@ -118,10 +259,9 @@ export const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ isOpen, 
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const result = await ProductApi.findAll(page, search, searchField);
-      const inStockProducts = (result.data || []).filter((p: Product) => p.stock > 0);
-      setProducts(inStockProducts);
-      setTotal(result.total || 0); // Note: total might include out of stock items, but it's okay for pagination
+      const result = await ProductApi.findAll(page, 10, search, searchField);
+      setProducts(result.data || []);
+      setTotal(result.total || 0);
     } catch (error) {
       console.error("Error loading products:", error);
     } finally {

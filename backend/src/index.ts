@@ -141,15 +141,15 @@ async function startServer() {
 
   // Customers
   app.get('/api/customers', (req, res) => customerController.getCustomers(req, res));
-  app.post('/api/customers', (req, res) => customerController.postCustomer(req, res));
-  app.put('/api/customers/:id', (req, res) => customerController.putCustomer(req, res));
-  app.delete('/api/customers/:id', (req, res) => customerController.deleteCustomerMethod(req, res));
+  app.post('/api/customers', authorize(['Administrator', 'Seller']), (req, res) => customerController.postCustomer(req, res));
+  app.put('/api/customers/:id', authorize(['Administrator']), (req, res) => customerController.putCustomer(req, res));
+  app.delete('/api/customers/:id', authorize(['Administrator']), (req, res) => customerController.deleteCustomerMethod(req, res));
 
   // Products
   app.get('/api/products', (req, res) => productController.getProducts(req, res));
-  app.post('/api/products', (req, res) => productController.postProduct(req, res));
-  app.put('/api/products/:id', (req, res) => productController.putProduct(req, res));
-  app.delete('/api/products/:id', (req, res) => productController.deleteProductMethod(req, res));
+  app.post('/api/products', authorize(['Administrator']), (req, res) => productController.postProduct(req, res));
+  app.put('/api/products/:id', authorize(['Administrator']), (req, res) => productController.putProduct(req, res));
+  app.delete('/api/products/:id', authorize(['Administrator']), (req, res) => productController.deleteProductMethod(req, res));
   
   // Sales
   app.get('/api/sales', (req, res) => saleController.getSales(req, res));

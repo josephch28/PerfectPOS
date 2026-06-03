@@ -42,15 +42,38 @@ export class PrismaCustomerRepository implements ICustomerRepository {
       }
     }
 
-    const [data, total] = await Promise.all([
-      this.prisma.customer.findMany({
-        skip,
-        take: limit,
-        where,
+    const total = await this.prisma.customer.count({ where });
+
+    if (total === 0 || skip >= total) {
+      return { data: [], total };
+    }
+
+    let actualSkip = skip;
+    let actualTake = limit;
+    let sortDir = 'asc';
+
+    if (skip > total / 2) {
+      actualTake = Math.min(limit, total - skip);
+      actualSkip = total - skip - actualTake;
+      sortDir = 'desc';
+    }
+
+    const idsResult = await this.prisma.customer.findMany({
+      skip: actualSkip,
+      take: actualTake,
+      select: { id: true },
+      where,
+      orderBy: { lastName: sortDir as any }
+    });
+
+    let data: any[] = [];
+    if (idsResult.length > 0) {
+      const ids = idsResult.map(c => c.id);
+      data = await this.prisma.customer.findMany({
+        where: { id: { in: ids } },
         orderBy: { lastName: 'asc' }
-      }),
-      this.prisma.customer.count({ where })
-    ]);
+      });
+    }
 
     return { data: data.map(c => this.mapToCustomer(c)), total };
   }

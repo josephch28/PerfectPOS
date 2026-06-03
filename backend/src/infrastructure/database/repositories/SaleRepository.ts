@@ -83,9 +83,13 @@ export class PrismaSaleRepository implements ISaleRepository {
     return result as unknown as Sale;
   }
 
-  async findAll(page: number, limit: number, search?: string, searchField?: string) {
+  async findAll(page: number, limit: number, search?: string, searchField?: string, sellerId?: string) {
     const skip = (page - 1) * limit;
     const where: any = {};
+
+    if (sellerId) {
+      where.userId = sellerId;
+    }
 
     if (search) {
       if (searchField === 'number') {
@@ -111,21 +115,33 @@ export class PrismaSaleRepository implements ISaleRepository {
       }
     }
 
-    const [data, total] = await Promise.all([
+    const [idsResult, total] = await Promise.all([
       this.prisma.sale.findMany({
         skip,
         take: limit,
+        select: { id: true },
         where,
-        include: {
-          customer: true,
-          user: true,
-          paymentMethod: true,
-          details: true
-        },
         orderBy: { date: 'desc' }
       }),
       this.prisma.sale.count({ where })
     ]);
+
+    let data: any[] = [];
+    if (idsResult.length > 0) {
+      const ids = idsResult.map(s => s.id);
+      data = await this.prisma.sale.findMany({
+        where: { id: { in: ids } },
+        include: {
+          customer: { select: { id: true, name: true, lastName: true } },
+          user: { select: { id: true, name: true, lastName: true } },
+          paymentMethod: { select: { id: true, name: true } },
+          details: {
+            select: { id: true, productId: true, productName: true, productCode: true, quantity: true, price: true, subtotal: true }
+          }
+        },
+        orderBy: { date: 'desc' }
+      });
+    }
 
     return { data: data as unknown as Sale[], total };
   }
