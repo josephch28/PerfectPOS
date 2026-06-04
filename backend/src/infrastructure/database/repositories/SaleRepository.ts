@@ -80,7 +80,9 @@ export class PrismaSaleRepository implements ISaleRepository {
     const result = await this.prisma.sale.findUnique({
       where: { id },
       include: {
-        details: true,
+        details: {
+          include: { product: true }
+        },
         customer: true,
         user: { include: { role: true } },
         paymentMethod: true
@@ -155,7 +157,7 @@ export class PrismaSaleRepository implements ISaleRepository {
     return last ? parseInt(last.number) : 0;
   }
 
-  async updateStatus(id: number, status: string) {
+  async updateStatus(id: number, status: string, modifiedByName?: string) {
     return this.prisma.$transaction(async (tx) => {
       const sale = await tx.sale.findUnique({
         where: { id },
@@ -216,7 +218,7 @@ export class PrismaSaleRepository implements ISaleRepository {
 
       return tx.sale.update({
         where: { id },
-        data: { status },
+        data: { status, modifiedByName },
         include: {
           details: true,
           customer: true,

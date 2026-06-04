@@ -13,7 +13,8 @@ export class PrismaProductRepository implements IProductRepository {
       price: dbProduct.price,
       stock: dbProduct.stock,
       appliesIva: dbProduct.appliesIva,
-      isActive: dbProduct.isActive
+      isActive: dbProduct.isActive,
+      lastModifiedByName: dbProduct.lastModifiedByName
     };
   }
 

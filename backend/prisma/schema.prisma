@@ -49,6 +49,7 @@ model Customer {
   email     String   @unique
   isActive  Boolean  @default(true)
   sales     Sale[]
+  lastModifiedByName String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -67,6 +68,7 @@ model Product {
   isActive       Boolean         @default(true)
   saleDetails    SaleDetail[]
   stockMovements StockMovement[]
+  lastModifiedByName String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -99,6 +101,7 @@ model Sale {
   userId          String
   user            User          @relation(fields: [userId], references: [id])
   sellerName      String?
+  modifiedByName  String?
   paymentMethodId String
   paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
   subtotal        Float

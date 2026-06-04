@@ -13,7 +13,8 @@ export class PrismaCustomerRepository implements ICustomerRepository {
       phone: dbCustomer.phone,
       address: dbCustomer.address,
       email: dbCustomer.email,
-      isActive: dbCustomer.isActive
+      isActive: dbCustomer.isActive,
+      lastModifiedByName: dbCustomer.lastModifiedByName
     };
   }
 

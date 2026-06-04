@@ -7,7 +7,7 @@ export class UpdateSaleStatusUseCase {
     private productRepo: IProductRepository
   ) {}
 
-  async execute(id: number, status: SaleStatus) {
+  async execute(id: number, status: SaleStatus, modifiedByName?: string) {
     const sale = await this.saleRepo.findById(id);
     if (!sale) throw new Error("Venta no encontrada.");
 
@@ -25,6 +25,6 @@ export class UpdateSaleStatusUseCase {
       }
     }
 
-    return this.saleRepo.updateStatus(id, status);
+    return this.saleRepo.updateStatus(id, status, modifiedByName);
   }
 }

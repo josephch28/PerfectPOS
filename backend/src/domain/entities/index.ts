@@ -39,6 +39,7 @@ export interface Customer {
   address: string;
   email: string;
   isActive: boolean;
+  lastModifiedByName?: string;
 }
 
 export interface Product {
@@ -49,6 +50,7 @@ export interface Product {
   stock: number;
   appliesIva: boolean;
   isActive: boolean;
+  lastModifiedByName?: string;
 }
 
 export interface PaymentMethod {
@@ -66,6 +68,7 @@ export interface SaleDetail {
   quantity: number;
   price: number;
   subtotal: number;
+  product?: Product;
 }
 
 export interface Sale {
@@ -82,6 +85,7 @@ export interface Sale {
   customer?: Customer;
   userId: string;
   sellerName?: string;
+  modifiedByName?: string;
   user?: User;
   paymentMethodId: string;
   paymentMethod?: PaymentMethod;

@@ -72,7 +72,9 @@ export class SaleController {
   async cancelSale(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id as string);
-      await this.updateStatus.execute(id, SaleStatus.Cancelled);
+      const user = (req as any).user;
+      const modifiedByName = user ? `${user.name} ${user.lastName}`.trim() : undefined;
+      await this.updateStatus.execute(id, SaleStatus.Cancelled, modifiedByName);
       res.status(204).send();
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -82,7 +84,9 @@ export class SaleController {
   async confirmSale(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id as string);
-      await this.updateStatus.execute(id, SaleStatus.Confirmed);
+      const user = (req as any).user;
+      const modifiedByName = user ? `${user.name} ${user.lastName}`.trim() : undefined;
+      await this.updateStatus.execute(id, SaleStatus.Confirmed, modifiedByName);
       res.status(200).send();
     } catch (error: any) {
       res.status(400).json({ message: error.message });

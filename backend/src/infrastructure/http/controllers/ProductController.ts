@@ -30,6 +30,10 @@ export class ProductController {
 
   async putProduct(req: Request, res: Response) {
     try {
+      const user = (req as any).user;
+      if (user) {
+        req.body.lastModifiedByName = `${user.name} ${user.lastName}`.trim();
+      }
       const product = await this.updateProduct.execute(req.params.id as string, req.body);
       res.json(product);
     } catch (error: any) {

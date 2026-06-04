@@ -29,6 +29,10 @@ export class CustomerController {
 
   async putCustomer(req: Request, res: Response) {
     try {
+      const user = (req as any).user;
+      if (user) {
+        req.body.lastModifiedByName = `${user.name} ${user.lastName}`.trim();
+      }
       const customer = await this.updateCustomer.execute(req.params.id as string, req.body);
       res.json(customer);
     } catch (error: any) {

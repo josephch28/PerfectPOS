@@ -24,7 +24,7 @@ export interface ISaleRepository {
   findById(id: number): Promise<Sale | null>;
   findAll(page: number, limit: number, search?: string, searchField?: string, sellerId?: string): Promise<{ data: Sale[], total: number }>;
   getLastNumber(): Promise<number>;
-  updateStatus(id: number, status: string): Promise<Sale>;
+  updateStatus(id: number, status: string, modifiedByName?: string): Promise<Sale>;
 }
 
 export interface IUserRepository extends IBaseRepository<User> {
