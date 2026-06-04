@@ -115,7 +115,7 @@ async function startServer() {
   const deleteProductUC = new DeleteProductUseCase(productRepo);
 
   const listSalesUC = new ListSalesUseCase(saleRepo);
-  const createSaleUC = new CreateSaleUseCase(saleRepo, productRepo);
+  const createSaleUC = new CreateSaleUseCase(saleRepo, productRepo, customerRepo, userRepo);
   const updateSaleStatusUC = new UpdateSaleStatusUseCase(saleRepo, productRepo);
   const getSaleByIdUC = new GetSaleByIdUseCase(saleRepo);
 

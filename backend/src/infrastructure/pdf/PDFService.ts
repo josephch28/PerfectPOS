@@ -60,22 +60,22 @@ export class PDFService {
       doc.fontSize(11).font('Helvetica-Bold').fillColor(primaryColor).text('DATOS DEL ADQUIRIENTE', 65, clientY);
       
       doc.fontSize(10).fillColor('#000000').font('Helvetica');
-      const customer = sale.customer || ({} as any);
-      
       doc.text(`RAZÓN SOCIAL:`, 65, clientY + 20);
-      doc.font('Helvetica-Bold').text(`${customer.name || ''} ${customer.lastName || ''}`, 170, clientY + 20);
+      const cName = sale.customerName || '';
+      const cLastName = sale.customerLastName || '';
+      doc.font('Helvetica-Bold').text(`${cName} ${cLastName}`.trim() || 'N/A', 170, clientY + 20);
       
       doc.font('Helvetica').text(`RUC / CÉDULA:`, 65, clientY + 35);
-      doc.text(`${customer.id || sale.customerId || 'N/A'}`, 170, clientY + 35);
+      doc.text(`${sale.customerId || 'N/A'}`, 170, clientY + 35);
 
       doc.text(`DIRECCIÓN:`, 65, clientY + 50);
-      doc.text(`${customer.address || 'N/A'}`, 170, clientY + 50);
+      doc.text(`${sale.customerAddress || 'N/A'}`, 170, clientY + 50);
 
       doc.text(`TELÉFONO:`, 65, clientY + 65);
-      doc.text(`${customer.phone || 'N/A'}`, 170, clientY + 65);
+      doc.text(`${sale.customerPhone || 'N/A'}`, 170, clientY + 65);
 
       doc.text(`EMAIL:`, 350, clientY + 35);
-      doc.text(`${customer.email || 'N/A'}`, 350, clientY + 50);
+      doc.text(`${sale.customerEmail || 'N/A'}`, 350, clientY + 50);
 
       // --- Tabla de Productos ---
       currentY += 120; // Espacio suficiente para no sobreponerse
@@ -138,7 +138,7 @@ export class PDFService {
       // --- Vendedor ---
       totalsY += 40;
       doc.fontSize(9).fillColor(secondaryColor).font('Helvetica');
-      doc.text(`VENDEDOR: ${sale.user ? sale.user.name + ' ' + sale.user.lastName : 'N/A'}`, 50, totalsY);
+      doc.text(`VENDEDOR: ${sale.sellerName || 'N/A'}`, 50, totalsY);
 
       // --- Pie de página ---
       doc.fontSize(8).fillColor(secondaryColor).font('Helvetica-Oblique');

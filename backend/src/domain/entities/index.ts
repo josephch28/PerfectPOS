@@ -74,8 +74,14 @@ export interface Sale {
   date: Date;
   status: SaleStatus;
   customerId: string;
+  customerName?: string;
+  customerLastName?: string;
+  customerAddress?: string;
+  customerPhone?: string;
+  customerEmail?: string;
   customer?: Customer;
   userId: string;
+  sellerName?: string;
   user?: User;
   paymentMethodId: string;
   paymentMethod?: PaymentMethod;

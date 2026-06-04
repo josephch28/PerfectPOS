@@ -14,6 +14,12 @@ export class OracleSaleRepository implements ISaleRepository {
         status: sale.status,
         customerId: sale.customerId,
         userId: sale.userId,
+        sellerName: sale.sellerName,
+        customerName: sale.customerName,
+        customerLastName: sale.customerLastName,
+        customerAddress: sale.customerAddress,
+        customerPhone: sale.customerPhone,
+        customerEmail: sale.customerEmail,
         paymentMethodId: sale.paymentMethodId,
         subtotal: sale.subtotal,
         iva: sale.iva,
@@ -90,18 +96,16 @@ export class OracleSaleRepository implements ISaleRepository {
     }
 
     if (search) {
-      idsQuery = idsQuery.leftJoin('Customers', 'Sales.customerId', 'Customers.id');
-      countQuery = countQuery.leftJoin('Customers', 'Sales.customerId', 'Customers.id');
       const searchFn = function(this: any) {
         if (searchField === 'number') {
           this.where('Sales.number', 'like', `${search}%`);
         } else if (searchField === 'customer') {
-          this.where('Customers.name', 'like', `${search}%`)
-              .orWhere('Customers.lastName', 'like', `${search}%`);
+          this.where('Sales.customerName', 'like', `${search}%`)
+              .orWhere('Sales.customerLastName', 'like', `${search}%`);
         } else {
           this.where('Sales.number', 'like', `${search}%`)
-              .orWhere('Customers.name', 'like', `${search}%`)
-              .orWhere('Customers.lastName', 'like', `${search}%`);
+              .orWhere('Sales.customerName', 'like', `${search}%`)
+              .orWhere('Sales.customerLastName', 'like', `${search}%`);
         }
       };
       idsQuery.andWhere(searchFn);
@@ -116,13 +120,8 @@ export class OracleSaleRepository implements ISaleRepository {
     let data: any[] = [];
     if (saleIds.length > 0) {
       data = await this.knex('Sales')
-        .leftJoin('Customers', 'Sales.customerId', 'Customers.id')
-        .leftJoin('Users', 'Sales.userId', 'Users.id')
         .leftJoin('PaymentMethods', 'Sales.paymentMethodId', 'PaymentMethods.id')
         .select('Sales.*', {
-          customerName: 'Customers.name',
-          customerLastName: 'Customers.lastName',
-          userUsername: 'Users.username',
           paymentMethodName: 'PaymentMethods.name'
         })
         .whereIn('Sales.id', saleIds)
@@ -147,12 +146,16 @@ export class OracleSaleRepository implements ISaleRepository {
         status: row.status,
         customerId: row.customerId,
         userId: row.userId,
+        sellerName: row.sellerName,
+        customerName: row.customerName,
+        customerLastName: row.customerLastName,
+        customerAddress: row.customerAddress,
+        customerPhone: row.customerPhone,
+        customerEmail: row.customerEmail,
         paymentMethodId: row.paymentMethodId,
         subtotal: row.subtotal,
         iva: row.iva,
         total: row.total,
-        customer: { name: row.customerName, lastName: row.customerLastName } as any,
-        user: { username: row.userUsername } as any,
         paymentMethod: { name: row.paymentMethodName } as any,
         details: saleDetails.map(d => ({
           id: d.id,
@@ -248,6 +251,12 @@ export class OracleSaleRepository implements ISaleRepository {
       status: saleRow.status,
       customerId: saleRow.customerId,
       userId: saleRow.userId,
+      sellerName: saleRow.sellerName,
+      customerName: saleRow.customerName,
+      customerLastName: saleRow.customerLastName,
+      customerAddress: saleRow.customerAddress,
+      customerPhone: saleRow.customerPhone,
+      customerEmail: saleRow.customerEmail,
       paymentMethodId: saleRow.paymentMethodId,
       subtotal: saleRow.subtotal,
       iva: saleRow.iva,

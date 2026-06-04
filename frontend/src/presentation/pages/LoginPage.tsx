@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AuthApi } from '../../infrastructure/api/ApiRepositories';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
-import { LogIn, Mail, Lock, AlertCircle, ShieldCheck } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, ShieldCheck, Loader2 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -174,11 +174,11 @@ export const LoginPage: React.FC = () => {
               disabled={isLoading}
             >
               {isLoading ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div className="spinner"></div> Autenticando...
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center' }}>
+                  <Loader2 size={20} className="animate-spin" /> Autenticando...
                 </div>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center' }}>
                   Iniciar Sesión <LogIn size={20} />
                 </div>
               )}
@@ -203,15 +203,11 @@ export const LoginPage: React.FC = () => {
           </div>
           
           <style>{`
-            .spinner {
-              width: 18px;
-              height: 18px;
-              border: 2px solid rgba(255,255,255,0.3);
-              border-top-color: white;
-              border-radius: 50%;
-              animation: spin 0.8s linear infinite;
+            .animate-spin {
+              animation: spin 1s linear infinite;
             }
             @keyframes spin {
+              from { transform: rotate(0deg); }
               to { transform: rotate(360deg); }
             }
             .input:focus {

@@ -3,7 +3,8 @@ import { ClientApi } from '../../infrastructure/api/ApiRepositories';
 import type { Client } from '../../domain/entities';
 import { Modal, Pagination } from '../components/Shared';
 import { useToast } from '../components/Toast';
-import { Plus, Edit2, Trash2, Search, User, Phone, MapPin, Mail, CreditCard } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, User, Phone, MapPin, Mail, CreditCard, Loader2 } from 'lucide-react';
+import { allowOnlyNumbers, allowOnlyLetters } from '../utils/InputValidators';
 
 export const CustomersPage: React.FC = () => {
   const [customers, setCustomers] = useState<Client[]>([]);
@@ -11,11 +12,13 @@ export const CustomersPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [search, setSearch] = useState('');
+  const [searchField, setSearchField] = useState('name');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<string | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { showToast } = useToast();
 
@@ -32,7 +35,7 @@ export const CustomersPage: React.FC = () => {
   const fetchCustomers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, total } = await ClientApi.findAll(currentPage, itemsPerPage, search);
+      const { data, total } = await ClientApi.findAll(currentPage, itemsPerPage, search, searchField);
       setCustomers(data);
       setTotal(total);
     } catch (error) {
@@ -40,7 +43,7 @@ export const CustomersPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, itemsPerPage, search, showToast]);
+  }, [currentPage, itemsPerPage, search, searchField, showToast]);
 
   useEffect(() => {
     fetchCustomers();
@@ -67,6 +70,7 @@ export const CustomersPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingCustomer) {
         await ClientApi.update(editingCustomer.id, formData);
@@ -79,6 +83,8 @@ export const CustomersPage: React.FC = () => {
       fetchCustomers();
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Error al guardar cliente', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -115,20 +121,25 @@ export const CustomersPage: React.FC = () => {
       </header>
 
       <div className="card" style={{ marginBottom: '2rem', padding: '1rem 1.5rem' }}>
-        <div style={{ maxWidth: '400px' }}>
+        <div style={{ maxWidth: '600px' }}>
           <div className="input-group" style={{ borderRadius: '8px' }}>
-            <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
-              <Search size={18} color="var(--slate-500)" />
-            </div>
+            <select value={searchField} onChange={(e) => setSearchField(e.target.value)}>
+              <option value="name">Nombre</option>
+              <option value="lastName">Apellido</option>
+              <option value="cedula">Cédula</option>
+            </select>
             <input
               type="text"
-              placeholder="Buscar por nombre o cédula..."
+              placeholder={`Buscar por ${searchField === 'name' ? 'nombre' : searchField === 'lastName' ? 'apellido' : 'cédula'}...`}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
             />
+            <div style={{ padding: '0 1rem', background: 'var(--slate-50)', display: 'flex', alignItems: 'center' }}>
+              <Search size={18} color="var(--slate-500)" />
+            </div>
           </div>
         </div>
       </div>
@@ -207,14 +218,17 @@ export const CustomersPage: React.FC = () => {
                   type="text"
                   value={formData.id}
                   onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                  onKeyDown={allowOnlyNumbers}
                   placeholder="Ej: 1712345678"
                   required
                   disabled={!!editingCustomer}
                   pattern="\d{10}"
                   maxLength={10}
-                  title="Debe contener exactamente 10 dígitos numéricos"
                 />
             </div>
+            {formData.id && formData.id.length < 10 && (
+              <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>La cédula debe tener exactamente 10 dígitos numéricos</span>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
@@ -228,6 +242,7 @@ export const CustomersPage: React.FC = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onKeyDown={allowOnlyLetters}
                   placeholder="Nombre"
                   required
                   pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
@@ -245,6 +260,7 @@ export const CustomersPage: React.FC = () => {
                   type="text"
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  onKeyDown={allowOnlyLetters}
                   placeholder="Apellido"
                   required
                   pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
@@ -264,13 +280,16 @@ export const CustomersPage: React.FC = () => {
                 type="text"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onKeyDown={allowOnlyNumbers}
                 placeholder="Ej: 0991234567"
                 required
                 pattern="\d{10}"
                 maxLength={10}
-                title="Debe contener exactamente 10 dígitos numéricos"
               />
             </div>
+            {formData.phone && formData.phone.length < 10 && (
+              <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>El teléfono debe tener exactamente 10 dígitos numéricos</span>
+            )}
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
@@ -306,8 +325,10 @@ export const CustomersPage: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--slate-200)' }}>
-            <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} style={{ padding: '0.75rem 1.5rem' }}>Cancelar</button>
-            <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem' }}>Guardar Cliente</button>
+            <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} style={{ padding: '0.75rem 1.5rem' }} disabled={isSaving}>Cancelar</button>
+            <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} disabled={isSaving}>
+              {isSaving ? <><Loader2 size={18} className="animate-spin" /> Guardando...</> : 'Guardar Cliente'}
+            </button>
           </div>
         </form>
       </Modal>

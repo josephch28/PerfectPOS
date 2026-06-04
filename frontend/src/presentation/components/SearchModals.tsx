@@ -4,6 +4,7 @@ import { ClientApi, ProductApi } from '../../infrastructure/api/ApiRepositories'
 import { Modal, Pagination } from './Shared';
 import { Search, Loader2, Plus, User, Phone, MapPin, Mail, CreditCard } from 'lucide-react';
 import { useToast } from './Toast';
+import { allowOnlyNumbers, allowOnlyLetters } from '../utils/InputValidators';
 
 interface ClientSearchModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
   const [searchField, setSearchField] = useState('name'); 
   const [loading, setLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { showToast } = useToast();
 
   const [formData, setFormData] = useState<Client>({
@@ -52,6 +54,7 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
 
   const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       const newCustomer = await ClientApi.create(formData);
       showToast('Cliente creado exitosamente', 'success');
@@ -59,6 +62,8 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
       onSelect(newCustomer);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Error al guardar cliente', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -129,13 +134,16 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
                   type="text"
                   value={formData.id}
                   onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                  onKeyDown={allowOnlyNumbers}
                   placeholder="Ej: 1712345678"
                   required
                   pattern="\d{10}"
                   maxLength={10}
-                  title="Debe contener exactamente 10 dígitos numéricos"
                 />
             </div>
+            {formData.id && formData.id.length < 10 && (
+              <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>La cédula debe tener exactamente 10 dígitos numéricos</span>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
@@ -149,6 +157,7 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onKeyDown={allowOnlyLetters}
                   placeholder="Nombre"
                   required
                   pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
@@ -166,6 +175,7 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
                   type="text"
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  onKeyDown={allowOnlyLetters}
                   placeholder="Apellido"
                   required
                   pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
@@ -185,13 +195,16 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
                 type="text"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onKeyDown={allowOnlyNumbers}
                 placeholder="Ej: 0991234567"
                 required
                 pattern="\d{10}"
                 maxLength={10}
-                title="Debe contener exactamente 10 dígitos numéricos"
               />
             </div>
+            {formData.phone && formData.phone.length < 10 && (
+              <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>El teléfono debe tener exactamente 10 dígitos numéricos</span>
+            )}
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
@@ -227,8 +240,10 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--slate-200)' }}>
-            <button type="button" className="btn-secondary" onClick={() => setIsCreating(false)} style={{ padding: '0.75rem 1.5rem' }}>Cancelar</button>
-            <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem' }}>Guardar y Seleccionar</button>
+            <button type="button" className="btn-secondary" onClick={() => setIsCreating(false)} style={{ padding: '0.75rem 1.5rem' }} disabled={isSaving}>Cancelar</button>
+            <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} disabled={isSaving}>
+              {isSaving ? <><Loader2 size={18} className="animate-spin" /> Guardando...</> : 'Guardar y Seleccionar'}
+            </button>
           </div>
         </form>
     </Modal>

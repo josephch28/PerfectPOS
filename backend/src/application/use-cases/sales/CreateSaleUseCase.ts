@@ -1,10 +1,12 @@
-import { ISaleRepository, IProductRepository } from '../../../domain/repositories/index';
+import { ISaleRepository, IProductRepository, ICustomerRepository, IUserRepository } from '../../../domain/repositories/index';
 import { Sale, SaleStatus, SaleDetail } from '../../../domain/entities/index';
 
 export class CreateSaleUseCase {
   constructor(
     private saleRepo: ISaleRepository,
-    private productRepo: IProductRepository
+    private productRepo: IProductRepository,
+    private customerRepo: ICustomerRepository,
+    private userRepo: IUserRepository
   ) {}
 
   async execute(saleData: Omit<Sale, 'number' | 'date'>) {
@@ -15,7 +17,14 @@ export class CreateSaleUseCase {
       throw new Error("No se permiten productos duplicados en la misma venta.");
     }
 
-    // 2. Validation: Stock (only if Confirmed)
+    // 2. Fetch Customer and User for Snapshotting
+    const customer = await this.customerRepo.findById(saleData.customerId);
+    if (!customer) throw new Error(`Cliente ${saleData.customerId} no encontrado.`);
+    
+    const user = await this.userRepo.findById(saleData.userId);
+    if (!user) throw new Error(`Usuario ${saleData.userId} no encontrado.`);
+
+    // 3. Validation: Stock (only if Confirmed)
     if (saleData.status === SaleStatus.Confirmed) {
       for (const detail of saleData.details) {
         const product = await this.productRepo.findById(detail.productId);
@@ -27,11 +36,11 @@ export class CreateSaleUseCase {
       }
     }
 
-    // 3. Generate Number
+    // 4. Generate Number
     const lastNumber = await this.saleRepo.getLastNumber();
     const nextNumber = (lastNumber + 1).toString().padStart(6, '0');
 
-    // 4. Enrich details with historical data and calculate taxes
+    // 5. Enrich details with historical data and calculate taxes
     let subtotal = 0;
     let totalIva = 0;
 
@@ -56,13 +65,19 @@ export class CreateSaleUseCase {
       })
     );
 
-    // 5. Build final Sale object
+    // 6. Build final Sale object with Snapshots
     const sale: Sale = {
       ...saleData,
       number: nextNumber,
       date: new Date(),
       status: saleData.status || SaleStatus.Confirmed, // Default to Confirmed for POS
       details: enrichedDetails,
+      customerName: customer.name,
+      customerLastName: customer.lastName,
+      customerAddress: customer.address,
+      customerPhone: customer.phone,
+      customerEmail: customer.email,
+      sellerName: `${user.name} ${user.lastName}`,
       subtotal,
       iva: totalIva,
       total: subtotal + totalIva

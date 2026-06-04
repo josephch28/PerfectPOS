@@ -3,7 +3,8 @@ import { ProductApi } from '../../infrastructure/api/ApiRepositories';
 import type { Product } from '../../domain/entities';
 import { Modal, Pagination } from '../components/Shared';
 import { useToast } from '../components/Toast';
-import { Plus, Edit2, Trash2, Search, Package, Hash, DollarSign, Database } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Package, Hash, DollarSign, Database, Loader2 } from 'lucide-react';
+import { allowOnlyNumbers, allowOnlyDecimals } from '../utils/InputValidators';
 
 export const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -11,11 +12,13 @@ export const ProductsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [search, setSearch] = useState('');
+  const [searchField, setSearchField] = useState('name');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { showToast } = useToast();
 
@@ -31,7 +34,7 @@ export const ProductsPage: React.FC = () => {
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, total } = await ProductApi.findAll(currentPage, itemsPerPage, search, 'name', true);
+      const { data, total } = await ProductApi.findAll(currentPage, itemsPerPage, search, searchField, true);
       setProducts(data);
       setTotal(total);
     } catch (error) {
@@ -39,7 +42,7 @@ export const ProductsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, itemsPerPage, search, showToast]);
+  }, [currentPage, itemsPerPage, search, searchField, showToast]);
 
   useEffect(() => {
     fetchProducts();
@@ -65,6 +68,7 @@ export const ProductsPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingProduct) {
         await ProductApi.update(editingProduct.id, formData);
@@ -77,6 +81,8 @@ export const ProductsPage: React.FC = () => {
       fetchProducts();
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Error al guardar producto', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -113,20 +119,24 @@ export const ProductsPage: React.FC = () => {
       </header>
 
       <div className="card" style={{ marginBottom: '2rem', padding: '1rem 1.5rem' }}>
-        <div style={{ maxWidth: '400px' }}>
+        <div style={{ maxWidth: '600px' }}>
           <div className="input-group" style={{ borderRadius: '8px' }}>
-            <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
-              <Search size={18} color="var(--slate-500)" />
-            </div>
+            <select value={searchField} onChange={(e) => setSearchField(e.target.value)}>
+              <option value="name">Nombre</option>
+              <option value="code">Código</option>
+            </select>
             <input
               type="text"
-              placeholder="Buscar por nombre o código..."
+              placeholder={`Buscar por ${searchField === 'name' ? 'nombre' : 'código'}...`}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
             />
+            <div style={{ padding: '0 1rem', background: 'var(--slate-50)', display: 'flex', alignItems: 'center' }}>
+              <Search size={18} color="var(--slate-500)" />
+            </div>
           </div>
         </div>
       </div>
@@ -260,6 +270,7 @@ export const ProductsPage: React.FC = () => {
                   min="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  onKeyDown={(e) => allowOnlyDecimals(e, formData.price?.toString() || '')}
                   placeholder="0.00"
                   required
                 />
@@ -276,6 +287,7 @@ export const ProductsPage: React.FC = () => {
                   min="0"
                   value={formData.stock}
                   onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
+                  onKeyDown={allowOnlyNumbers}
                   placeholder="0"
                   required
                 />
@@ -305,8 +317,10 @@ export const ProductsPage: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--slate-200)' }}>
-            <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} style={{ padding: '0.75rem 1.5rem' }}>Cancelar</button>
-            <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem' }}>Guardar Producto</button>
+            <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} style={{ padding: '0.75rem 1.5rem' }} disabled={isSaving}>Cancelar</button>
+            <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} disabled={isSaving}>
+              {isSaving ? <><Loader2 size={18} className="animate-spin" /> Guardando...</> : 'Guardar Producto'}
+            </button>
           </div>
         </form>
       </Modal>

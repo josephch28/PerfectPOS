@@ -91,8 +91,14 @@ model Sale {
   status          String        @default("Draft") // Draft, Confirmed, Cancelled
   customerId      String
   customer        Customer      @relation(fields: [customerId], references: [id])
+  customerName      String?
+  customerLastName  String?
+  customerAddress   String?
+  customerPhone     String?
+  customerEmail     String?
   userId          String
   user            User          @relation(fields: [userId], references: [id])
+  sellerName      String?
   paymentMethodId String
   paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
   subtotal        Float
@@ -104,6 +110,8 @@ model Sale {
 
   @@index([number])
   @@index([date])
+  @@index([customerName])
+  @@index([customerLastName])
 }
 
 model SaleDetail {

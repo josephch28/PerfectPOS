@@ -109,7 +109,9 @@ export const HistoryPage: React.FC = () => {
                   <div style={{ fontWeight: 600, color: 'var(--slate-800)' }}>{new Date(inv.date).toLocaleDateString()}</div>
                   <div style={{ fontSize: '0.75rem' }}>{new Date(inv.date).toLocaleTimeString()}</div>
                 </td>
-                <td style={{ fontWeight: 500 }}>{inv.customer ? `${inv.customer.name} ${inv.customer.lastName}` : 'N/A'}</td>
+                <td style={{ fontWeight: 500 }}>
+                  {inv.customerName ? `${inv.customerName} ${inv.customerLastName || ''}`.trim() : 'N/A'}
+                </td>
                 <td className="text-right" style={{ fontWeight: 700 }}>${inv.total.toFixed(2)}</td>
                 <td className="text-center">
                   <span className={`badge ${inv.status === 'Confirmed' ? 'badge-active' : inv.status === 'Cancelled' ? 'badge-void' : 'badge-secondary'}`}>
@@ -184,8 +186,9 @@ export const HistoryPage: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem', padding: '1rem', background: 'var(--slate-50)', borderRadius: '8px' }}>
               <div>
                 <p className="text-muted" style={{ margin: '0 0 0.2rem 0', fontSize: '0.7rem', fontWeight: 700 }}>ADQUIRIENTE</p>
-                <p style={{ margin: 0, fontWeight: 600 }}>{selectedInvoice.customer ? `${selectedInvoice.customer.name} ${selectedInvoice.customer.lastName}` : 'N/A'}</p>
+                <p style={{ margin: 0, fontWeight: 600 }}>{selectedInvoice.customerName ? `${selectedInvoice.customerName} ${selectedInvoice.customerLastName || ''}`.trim() : 'N/A'}</p>
                 <p style={{ margin: 0, fontSize: '0.85rem' }}>ID: {selectedInvoice.customerId}</p>
+                <p style={{ margin: 0, fontSize: '0.85rem' }}>Vendedor: {selectedInvoice.sellerName || 'N/A'}</p>
               </div>
               <div className="text-right">
                 <p className="text-muted" style={{ margin: '0 0 0.2rem 0', fontSize: '0.7rem', fontWeight: 700 }}>DOCUMENTO</p>

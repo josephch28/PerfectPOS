@@ -12,7 +12,9 @@ export class UserController {
   async getUsers(req: Request, res: Response) {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
-    const result = await this.listUsers.execute(page, limit);
+    const search = req.query.search as string;
+    const searchField = req.query.searchField as string;
+    const result = await this.listUsers.execute(page, limit, search, searchField);
     res.json(result);
   }
 

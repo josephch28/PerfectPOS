@@ -15,6 +15,12 @@ export class PrismaSaleRepository implements ISaleRepository {
           status: sale.status,
           customerId: sale.customerId,
           userId: sale.userId,
+          sellerName: sale.sellerName,
+          customerName: sale.customerName,
+          customerLastName: sale.customerLastName,
+          customerAddress: sale.customerAddress,
+          customerPhone: sale.customerPhone,
+          customerEmail: sale.customerEmail,
           paymentMethodId: sale.paymentMethodId,
           subtotal: sale.subtotal,
           iva: sale.iva,
@@ -95,12 +101,10 @@ export class PrismaSaleRepository implements ISaleRepository {
       if (searchField === 'number') {
         where.number = { startsWith: search };
       } else if (searchField === 'customer') {
-        where.customer = {
-          OR: [
-            { name: { startsWith: search } },
-            { lastName: { startsWith: search } }
-          ]
-        };
+        where.OR = [
+          { customerName: { startsWith: search } },
+          { customerLastName: { startsWith: search } }
+        ];
       } else {
         const isIdSearch = !isNaN(Number(search));
         if (isIdSearch) {
@@ -108,8 +112,8 @@ export class PrismaSaleRepository implements ISaleRepository {
         } else {
           where.OR = [
             { number: { startsWith: search } },
-            { customer: { name: { startsWith: search } } },
-            { customer: { lastName: { startsWith: search } } }
+            { customerName: { startsWith: search } },
+            { customerLastName: { startsWith: search } }
           ];
         }
       }
@@ -132,8 +136,6 @@ export class PrismaSaleRepository implements ISaleRepository {
       data = await this.prisma.sale.findMany({
         where: { id: { in: ids } },
         include: {
-          customer: { select: { id: true, name: true, lastName: true } },
-          user: { select: { id: true, name: true, lastName: true } },
           paymentMethod: { select: { id: true, name: true } },
           details: {
             select: { id: true, productId: true, productName: true, productCode: true, quantity: true, price: true, subtotal: true }
