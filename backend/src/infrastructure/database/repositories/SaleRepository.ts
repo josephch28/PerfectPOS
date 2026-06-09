@@ -53,9 +53,13 @@ export class PrismaSaleRepository implements ISaleRepository {
       // PDF says: "El stock se descuenta únicamente cuando la venta pasa a Confirmed."
       // If we are creating it directly as Confirmed:
       if (sale.status === SaleStatus.Confirmed) {
+        const concurrencyErrors = [];
         for (const detail of sale.details) {
           const product = await tx.product.findUnique({ where: { id: detail.productId } });
-          if (!product) throw new Error(`Product ${detail.productId} not found`);
+          if (!product) {
+            concurrencyErrors.push({ productId: detail.productId, productName: detail.productName, available: 0, requested: detail.quantity, message: 'Producto no encontrado' });
+            continue;
+          }
 
           const updatedProduct = await tx.product.update({
             where: { id: detail.productId },
@@ -63,21 +67,31 @@ export class PrismaSaleRepository implements ISaleRepository {
           });
 
           if (updatedProduct.stock < 0) {
-            throw new Error(`Stock insuficiente para ${detail.productName}. Disponible: ${product.stock}, Solicitado: ${detail.quantity}`);
-          }
-
-          // Register Stock Movement
-          await tx.stockMovement.create({
-            data: {
+            concurrencyErrors.push({
               productId: detail.productId,
-              type: 'OUT',
-              quantity: detail.quantity,
-              stockBefore: product.stock,
-              stockAfter: product.stock - detail.quantity,
-              userId: sale.userId,
-              reference: `Sale #${sale.number}`
-            }
-          });
+              productName: detail.productName,
+              available: updatedProduct.stock + detail.quantity,
+              requested: detail.quantity,
+              message: `Stock insuficiente para ${detail.productName}. Disponible: ${updatedProduct.stock + detail.quantity}, Solicitado: ${detail.quantity}`
+            });
+          } else {
+            // Register Stock Movement
+            await tx.stockMovement.create({
+              data: {
+                productId: detail.productId,
+                type: 'OUT',
+                quantity: detail.quantity,
+                stockBefore: updatedProduct.stock + detail.quantity,
+                stockAfter: updatedProduct.stock,
+                userId: sale.userId,
+                reference: `Sale #${sale.number}`
+              }
+            });
+          }
+        }
+        
+        if (concurrencyErrors.length > 0) {
+          throw new Error(JSON.stringify({ type: 'CONCURRENCY_ERROR', issues: concurrencyErrors }));
         }
       }
 
@@ -175,9 +189,13 @@ export class PrismaSaleRepository implements ISaleRepository {
 
       // Handle stock if transitioning to Confirmed
       if (status === SaleStatus.Confirmed && sale.status !== SaleStatus.Confirmed) {
+        const concurrencyErrors = [];
         for (const detail of sale.details) {
           const product = await tx.product.findUnique({ where: { id: detail.productId } });
-          if (!product) throw new Error(`Product ${detail.productId} not found`);
+          if (!product) {
+            concurrencyErrors.push({ productId: detail.productId, productName: detail.productName, available: 0, requested: detail.quantity, message: 'Producto no encontrado' });
+            continue;
+          }
 
           const updatedProduct = await tx.product.update({
             where: { id: detail.productId },
@@ -185,20 +203,30 @@ export class PrismaSaleRepository implements ISaleRepository {
           });
 
           if (updatedProduct.stock < 0) {
-            throw new Error(`Stock insuficiente para ${detail.productName}. Disponible: ${product.stock}, Solicitado: ${detail.quantity}`);
-          }
-
-          await tx.stockMovement.create({
-            data: {
+            concurrencyErrors.push({
               productId: detail.productId,
-              type: 'OUT',
-              quantity: detail.quantity,
-              stockBefore: product.stock,
-              stockAfter: product.stock - detail.quantity,
-              userId: sale.userId,
-              reference: `Sale #${sale.number}`
-            }
-          });
+              productName: detail.productName,
+              available: updatedProduct.stock + detail.quantity,
+              requested: detail.quantity,
+              message: `Stock insuficiente para ${detail.productName}. Disponible: ${updatedProduct.stock + detail.quantity}, Solicitado: ${detail.quantity}`
+            });
+          } else {
+            await tx.stockMovement.create({
+              data: {
+                productId: detail.productId,
+                type: 'OUT',
+                quantity: detail.quantity,
+                stockBefore: updatedProduct.stock + detail.quantity,
+                stockAfter: updatedProduct.stock,
+                userId: sale.userId,
+                reference: `Sale #${sale.number}`
+              }
+            });
+          }
+        }
+        
+        if (concurrencyErrors.length > 0) {
+          throw new Error(JSON.stringify({ type: 'CONCURRENCY_ERROR', issues: concurrencyErrors }));
         }
       }
 

@@ -3,6 +3,7 @@ import type { Client, Product, InvoiceDetail } from '../../domain/entities';
 import { InvoiceApi } from '../../infrastructure/api/ApiRepositories';
 import { ClientSearchModal, ProductSearchModal } from '../components/SearchModals';
 import { InvoicePreviewModal } from '../components/InvoicePreviewModal';
+import { ConcurrencyModal, type ConcurrencyIssue } from '../components/ConcurrencyModal';
 import { useToast } from '../components/Toast';
 import { Modal } from '../components/Shared';
 import { User, Package, FileText, Trash2, Plus, Info, Eye } from 'lucide-react';
@@ -16,6 +17,9 @@ export const InvoicePage: React.FC = () => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  
+  const [concurrencyIssues, setConcurrencyIssues] = useState<ConcurrencyIssue[]>([]);
+  const [isConcurrencyModalOpen, setIsConcurrencyModalOpen] = useState(false);
 
   const [subtotal, setSubtotal] = useState(0);
   const [iva, setIva] = useState(0);
@@ -124,17 +128,42 @@ export const InvoicePage: React.FC = () => {
       console.error(error);
       let errorMessage = 'Error al generar la factura. Verifique el stock disponible.';
       
-      // Axios con responseType: 'blob' devuelve el error en error.response.data como Blob
       if (error.response && error.response.data instanceof Blob) {
         try {
           const text = await error.response.data.text();
           const json = JSON.parse(text);
-          if (json.message) errorMessage = json.message;
+          if (json.message) {
+            try {
+              const nestedObj = JSON.parse(json.message);
+              if (nestedObj.type === 'CONCURRENCY_ERROR') {
+                setConcurrencyIssues(nestedObj.issues);
+                setIsConcurrencyModalOpen(true);
+                setIsPreviewModalOpen(false);
+                return; // Do not show generic error toast
+              } else {
+                errorMessage = json.message;
+              }
+            } catch (e) {
+              errorMessage = json.message;
+            }
+          }
         } catch (e) {
           console.error("Error parsing error blob", e);
         }
       } else if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
+        try {
+          const nestedObj = JSON.parse(error.response.data.message);
+          if (nestedObj.type === 'CONCURRENCY_ERROR') {
+            setConcurrencyIssues(nestedObj.issues);
+            setIsConcurrencyModalOpen(true);
+            setIsPreviewModalOpen(false);
+            return;
+          } else {
+            errorMessage = error.response.data.message;
+          }
+        } catch(e) {
+          errorMessage = error.response.data.message;
+        }
       }
       
       showToast(errorMessage, 'error');
@@ -382,6 +411,22 @@ export const InvoicePage: React.FC = () => {
           <button onClick={() => { if(itemToDelete) removeItem(itemToDelete); setItemToDelete(null); }} className="btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }}>Eliminar</button>
         </div>
       </Modal>
+      <ConcurrencyModal
+        isOpen={isConcurrencyModalOpen}
+        issues={concurrencyIssues}
+        onClose={() => setIsConcurrencyModalOpen(false)}
+        onRemoveItem={(productId) => {
+          removeItem(productId);
+          setConcurrencyIssues(concurrencyIssues.filter(i => i.productId !== productId));
+          if (concurrencyIssues.length <= 1) setIsConcurrencyModalOpen(false);
+        }}
+        onAdjustQuantity={(productId, newQuantity) => {
+          updateQuantity(productId, newQuantity.toString());
+          setConcurrencyIssues(concurrencyIssues.filter(i => i.productId !== productId));
+          if (concurrencyIssues.length <= 1) setIsConcurrencyModalOpen(false);
+        }}
+      />
+
     </div>
   );
 };
