@@ -145,13 +145,13 @@ const AppContent: React.FC = () => {
           setPendingPage(null);
         }}
         onSave={async () => {
+          setShowNavWarning(false);
           const success = await triggerSave();
           if (success) {
             setDirty(false);
-            setShowNavWarning(false);
             if (pendingPage) setCurrentPage(pendingPage);
-            setPendingPage(null);
           }
+          setPendingPage(null);
         }}
       />
     </div>

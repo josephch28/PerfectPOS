@@ -33,14 +33,14 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '2rem' }}>
-        <button onClick={onCancel} className="btn-secondary">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+        <button onClick={onCancel} className="btn-secondary" style={{ padding: '0.75rem 1.5rem', fontSize: '1rem' }}>
           Cancelar
         </button>
-        <button onClick={onDiscard} className="btn-secondary" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}>
+        <button onClick={onDiscard} className="btn-secondary" style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}>
           Salir sin guardar
         </button>
-        <button onClick={onSave} className="btn-primary">
+        <button onClick={onSave} className="btn-primary" style={{ padding: '0.75rem 1.5rem', fontSize: '1rem' }}>
           Guardar cambios
         </button>
       </div>

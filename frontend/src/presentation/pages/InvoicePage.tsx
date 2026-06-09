@@ -47,7 +47,7 @@ export const InvoicePage: React.FC = () => {
   }, [selectedClient, details, setDirty]);
 
   useEffect(() => {
-    registerSaveAction(handleFacturar);
+    registerSaveAction(handleRequestPreview);
   }, [registerSaveAction, selectedClient, details, subtotal, iva, total]);
 
   const removeItem = (productId: string) => {
@@ -105,6 +105,16 @@ export const InvoicePage: React.FC = () => {
       showToast('Producto añadido a la factura', 'success');
     }
     setIsProductModalOpen(false);
+  };
+
+  const handleRequestPreview = async (): Promise<boolean> => {
+    const validDetails = details.filter(d => d.quantity > 0);
+    if (!selectedClient || validDetails.length === 0) {
+      showToast('La factura debe tener al menos un producto con cantidad mayor a 0 y un cliente seleccionado', 'warning');
+      return false;
+    }
+    setIsPreviewModalOpen(true);
+    return false; // Return false to prevent navigation away from InvoicePage
   };
 
   const handleFacturar = async (): Promise<boolean> => {
