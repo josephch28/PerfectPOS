@@ -237,8 +237,8 @@ export const CustomersPage: React.FC = () => {
                   title="Debe tener 10 o 13 dígitos numéricos"
                 />
             </div>
-            {formData.id && formData.id.length < 10 && (
-              <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>La cédula debe tener exactamente 10 dígitos numéricos</span>
+            {formData.id && !/^(\d{10}|\d{10}001)$/.test(formData.id) && (
+              <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>La identificación debe tener 10 dígitos (Cédula) o 13 dígitos terminados en 001 (RUC)</span>
             )}
           </div>
 

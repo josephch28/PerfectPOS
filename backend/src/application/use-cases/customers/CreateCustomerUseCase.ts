@@ -11,7 +11,7 @@ export class CreateCustomerUseCase {
     }
 
     if (!Validators.isValidCedula(customerData.id)) {
-      throw new Error("La cédula/RUC debe tener 10 o 13 dígitos numéricos válidos.");
+      throw new Error("La identificación debe tener 10 dígitos (Cédula) o 13 dígitos terminados en 001 (RUC).");
     }
     
     // Basic validations
