@@ -10,6 +10,14 @@ export class UpdateUserUseCase {
   ) {}
 
   async execute(id: string, userData: Partial<User>, adminId?: string) {
+    // Prevent deactivating the built-in admin account
+    if (userData.isActive === false) {
+      const user = await this.userRepo.findById(id);
+      if (user?.username === 'admin') {
+        throw new Error("El usuario administrador principal no puede ser desactivado.");
+      }
+    }
+
     if (userData.cedula && !Validators.isValidCedula(userData.cedula)) {
       throw new Error("La identificación debe tener 10 dígitos (Cédula) o 13 dígitos terminados en 001 (RUC).");
     }
