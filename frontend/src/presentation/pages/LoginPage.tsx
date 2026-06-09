@@ -154,6 +154,8 @@ export const LoginPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,10}$"
+                  title="La contraseña debe tener entre 8 y 10 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
                   required
                 />
               </div>

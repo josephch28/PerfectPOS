@@ -48,12 +48,17 @@ export class UpdateUserUseCase {
     let updateData = { ...userData };
 
     if (userData.password) {
-      if (userData.password.length < 6) {
-        throw new Error("La contraseña debe tener al menos 6 caracteres.");
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,10}$/;
+      if (!passwordRegex.test(userData.password)) {
+        throw new Error("La contraseña debe tener entre 8 y 10 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial.");
       }
       updateData.password = await this.authService.hashPassword(userData.password);
     } else {
       delete updateData.password;
+    }
+
+    if (userData.isLocked === false) {
+      updateData.loginAttempts = 0;
     }
 
     return this.userRepo.update(id, updateData);

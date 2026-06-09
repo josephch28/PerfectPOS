@@ -5,12 +5,13 @@ import { HistoryPage } from './presentation/pages/HistoryPage';
 import { CustomersPage } from './presentation/pages/CustomersPage';
 import { ProductsPage } from './presentation/pages/ProductsPage';
 import { UsersPage } from './presentation/pages/UsersPage';
+import { ErrorLogsPage } from './presentation/pages/ErrorLogsPage';
 import { AuthProvider, useAuth } from './presentation/context/AuthContext';
 import { ToastProvider } from './presentation/components/Toast';
-import { LogOut, FileText, History, Users, Package, Settings } from 'lucide-react';
+import { LogOut, FileText, History, Users, Package, Settings, AlertTriangle } from 'lucide-react';
 import './presentation/styles/global.css';
 
-type Page = 'invoice' | 'history' | 'customers' | 'products' | 'users';
+type Page = 'invoice' | 'history' | 'customers' | 'products' | 'users' | 'errorlogs';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
@@ -26,6 +27,7 @@ const AppContent: React.FC = () => {
     { id: 'customers', label: 'Clientes', icon: <Users size={20} />, roles: ['Administrator'] },
     { id: 'products', label: 'Productos', icon: <Package size={20} />, roles: ['Administrator'] },
     { id: 'users', label: 'Usuarios', icon: <Settings size={20} />, roles: ['Administrator'] },
+    { id: 'errorlogs', label: 'Errores', icon: <AlertTriangle size={20} />, roles: ['Administrator'] },
   ];
 
   const filteredNavItems = navItems.filter(item => 
@@ -40,6 +42,7 @@ const AppContent: React.FC = () => {
       case 'customers': return <CustomersPage />;
       case 'products': return <ProductsPage />;
       case 'users': return <UsersPage />;
+      case 'errorlogs': return <ErrorLogsPage />;
       default: return <InvoicePage />;
     }
   };

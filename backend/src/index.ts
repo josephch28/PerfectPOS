@@ -29,6 +29,7 @@ import {
   DeleteUserUseCase,
   ListRolesUseCase,
   LogErrorUseCase,
+  ListErrorLogsUseCase,
   GetSaleByIdUseCase
 } from './application/use-cases/index';
 
@@ -38,6 +39,7 @@ import { ProductController } from './infrastructure/http/controllers/ProductCont
 import { SaleController } from './infrastructure/http/controllers/SaleController';
 import { UserController } from './infrastructure/http/controllers/UserController';
 import { RoleController } from './infrastructure/http/controllers/RoleController';
+import { ErrorLogController } from './infrastructure/http/controllers/ErrorLogController';
 
 import { PDFService } from './infrastructure/pdf/PDFService';
 import { AuthService } from './infrastructure/security/AuthService';
@@ -122,12 +124,15 @@ async function startServer() {
   app.put('/api/sales/:id/confirm', (req, res) => saleController.confirmSale(req, res));
   app.delete('/api/sales/:id', (req, res) => saleController.cancelSale(req, res));
 
+  const errorLogController = new ErrorLogController(new ListErrorLogsUseCase(errorLogRepo));
+  
   // Admin Only Routes
   app.get('/api/users', authorize(['Administrator']), (req, res) => userController.getUsers(req, res));
   app.post('/api/users', authorize(['Administrator']), (req, res) => userController.postUser(req, res));
   app.put('/api/users/:id', authorize(['Administrator']), (req, res) => userController.putUser(req, res));
   app.delete('/api/users/:id', authorize(['Administrator']), (req, res) => userController.deleteUserMethod(req, res));
   app.get('/api/roles', authorize(['Administrator']), (req, res) => roleController.getRoles(req, res));
+  app.get('/api/error-logs', authorize(['Administrator']), (req, res) => errorLogController.getErrorLogs(req, res));
 
   // Global Error Handler & Logger
   app.use(async (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -34,8 +34,9 @@ export class CreateUserUseCase {
       throw new Error("El formato del correo electrónico no es válido.");
     }
 
-    if (!userData.password || userData.password.length < 6) {
-      throw new Error("La contraseña debe tener al menos 6 caracteres.");
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,10}$/;
+    if (!userData.password || !passwordRegex.test(userData.password)) {
+      throw new Error("La contraseña debe tener entre 8 y 10 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial.");
     }
 
     const existingUsername = await this.userRepo.findByUsername(userData.username);

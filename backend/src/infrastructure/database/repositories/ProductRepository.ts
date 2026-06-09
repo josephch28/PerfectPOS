@@ -23,6 +23,7 @@ export class PrismaProductRepository implements IProductRepository {
 
     if (!includeInactive) {
       where.isActive = true;
+      where.stock = { gt: 0 };
     }
 
     if (search) {

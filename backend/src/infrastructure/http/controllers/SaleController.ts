@@ -34,9 +34,9 @@ export class SaleController {
     try {
       const userId = (req as any).user.id;
       
-      // Get Default Payment Method (Cash)
+      // Get Default Payment Method (Cash/Efectivo)
       const methods = await this.paymentMethodRepo.findAll();
-      const cashMethod = methods.find(m => m.name.toLowerCase().includes('cash'));
+      const cashMethod = methods.find(m => m.name.toLowerCase().includes('efectivo') || m.name.toLowerCase().includes('cash'));
 
       if (!cashMethod) throw new Error("Método de pago 'Efectivo' (Cash) no encontrado en el sistema.");
 

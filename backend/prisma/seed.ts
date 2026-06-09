@@ -22,10 +22,10 @@ async function main() {
   console.log('✅ Roles creados');
 
   // 2. Default User (Admin)
-  const hashedAdminPassword = await bcrypt.hash('admin123', 10);
+  const hashedAdminPassword = await bcrypt.hash('Admin123*', 10);
   const adminUser = await prisma.user.upsert({
     where: { username: 'admin' },
-    update: {},
+    update: { password: hashedAdminPassword },
     create: {
       username: 'admin',
       firstName: 'Admin',
@@ -39,10 +39,10 @@ async function main() {
   });
 
   // Seller User
-  const hashedSellerPassword = await bcrypt.hash('seller123', 10);
+  const hashedSellerPassword = await bcrypt.hash('Seller123*', 10);
   const sellerUser = await prisma.user.upsert({
     where: { username: 'seller' },
-    update: {},
+    update: { password: hashedSellerPassword },
     create: {
       username: 'seller',
       firstName: 'Juan',

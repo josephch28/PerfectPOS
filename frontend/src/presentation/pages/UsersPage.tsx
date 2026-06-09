@@ -401,13 +401,15 @@ export const UsersPage: React.FC = () => {
               <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
                 <Lock size={18} color="var(--slate-500)" />
               </div>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="••••••••"
-                required={!editingUser}
-              />
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
+                  pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,10}$"
+                  title="La contraseña debe tener entre 8 y 10 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
+                  required={!editingUser}
+                />
             </div>
           </div>
 

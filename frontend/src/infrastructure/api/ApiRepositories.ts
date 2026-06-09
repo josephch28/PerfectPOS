@@ -106,3 +106,12 @@ export const InvoiceApi = {
     return response.data;
   }
 };
+
+export const ErrorLogApi = {
+  findAll: async (page: number, limit: number = 10) => {
+    const response = await api.get('/error-logs', {
+      params: { page, limit }
+    });
+    return response.data; // { data: ErrorLog[], total: number }
+  }
+};
