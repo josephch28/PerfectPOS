@@ -2,7 +2,7 @@ import React from 'react';
 
 interface ModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (reason?: 'close-button' | 'backdrop') => void;
   title: string;
   children: React.ReactNode;
 }
@@ -11,11 +11,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose('backdrop'); }}>
       <div className="modal-content">
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
           <h2 style={{ margin: 0 }}>{title}</h2>
-          <button onClick={onClose} className="btn-secondary">X</button>
+          <button onClick={() => onClose('close-button')} className="btn-secondary">X</button>
         </div>
         {children}
       </div>

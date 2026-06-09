@@ -6,10 +6,12 @@ import { InvoicePreviewModal } from '../components/InvoicePreviewModal';
 import { ConcurrencyModal, type ConcurrencyIssue } from '../components/ConcurrencyModal';
 import { useToast } from '../components/Toast';
 import { Modal } from '../components/Shared';
+import { useUnsavedChanges } from '../context/UnsavedChangesContext';
 import { User, Package, FileText, Trash2, Plus, Info, Eye } from 'lucide-react';
 
 export const InvoicePage: React.FC = () => {
   const { showToast } = useToast();
+  const { setDirty, registerSaveAction } = useUnsavedChanges();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [details, setDetails] = useState<InvoiceDetail[]>([]);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -34,6 +36,19 @@ export const InvoicePage: React.FC = () => {
     setIva(totalIva);
     setTotal(totalSub + totalIva);
   }, [details]);
+
+  useEffect(() => {
+    // Si hay cliente o productos, la factura está "sucia"
+    if (selectedClient || details.length > 0) {
+      setDirty(true);
+    } else {
+      setDirty(false);
+    }
+  }, [selectedClient, details, setDirty]);
+
+  useEffect(() => {
+    registerSaveAction(handleFacturar);
+  }, [registerSaveAction, selectedClient, details, subtotal, iva, total]);
 
   const removeItem = (productId: string) => {
     setDetails(details.filter(d => d.productId !== productId));
@@ -92,11 +107,11 @@ export const InvoicePage: React.FC = () => {
     setIsProductModalOpen(false);
   };
 
-  const handleFacturar = async () => {
+  const handleFacturar = async (): Promise<boolean> => {
     const validDetails = details.filter(d => d.quantity > 0);
     if (!selectedClient || validDetails.length === 0) {
-      showToast('La factura debe tener al menos un producto con cantidad mayor a 0', 'warning');
-      return;
+      showToast('La factura debe tener al menos un producto con cantidad mayor a 0 y un cliente seleccionado', 'warning');
+      return false;
     }
     try {
       const invoiceData = {
@@ -122,8 +137,10 @@ export const InvoicePage: React.FC = () => {
 
       setSelectedClient(null);
       setDetails([]);
+      setDirty(false);
       setIsPreviewModalOpen(false);
       showToast('Factura generada con éxito', 'success');
+      return true;
     } catch (error: any) {
       console.error(error);
       let errorMessage = 'Error al generar la factura. Verifique el stock disponible.';
@@ -139,7 +156,7 @@ export const InvoicePage: React.FC = () => {
                 setConcurrencyIssues(nestedObj.issues);
                 setIsConcurrencyModalOpen(true);
                 setIsPreviewModalOpen(false);
-                return; // Do not show generic error toast
+                return false; // Do not show generic error toast
               } else {
                 errorMessage = json.message;
               }
@@ -157,7 +174,7 @@ export const InvoicePage: React.FC = () => {
             setConcurrencyIssues(nestedObj.issues);
             setIsConcurrencyModalOpen(true);
             setIsPreviewModalOpen(false);
-            return;
+            return false;
           } else {
             errorMessage = error.response.data.message;
           }
@@ -167,6 +184,7 @@ export const InvoicePage: React.FC = () => {
       }
       
       showToast(errorMessage, 'error');
+      return false;
     } finally {
       setIsSubmitting(false);
     }

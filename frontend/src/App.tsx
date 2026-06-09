@@ -8,6 +8,8 @@ import { UsersPage } from './presentation/pages/UsersPage';
 import { ErrorLogsPage } from './presentation/pages/ErrorLogsPage';
 import { AuthProvider, useAuth } from './presentation/context/AuthContext';
 import { ToastProvider } from './presentation/components/Toast';
+import { UnsavedChangesProvider, useUnsavedChanges } from './presentation/context/UnsavedChangesContext';
+import { UnsavedChangesModal } from './presentation/components/UnsavedChangesModal';
 import { LogOut, FileText, History, Users, Package, Settings, AlertTriangle } from 'lucide-react';
 import './presentation/styles/global.css';
 
@@ -16,6 +18,10 @@ type Page = 'invoice' | 'history' | 'customers' | 'products' | 'users' | 'errorl
 const AppContent: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('invoice');
+  const { isDirty, setDirty, triggerSave } = useUnsavedChanges();
+  
+  const [pendingPage, setPendingPage] = useState<Page | null>(null);
+  const [showNavWarning, setShowNavWarning] = useState(false);
 
   if (!isAuthenticated) {
     return <LoginPage />;
@@ -61,7 +67,14 @@ const AppContent: React.FC = () => {
               {filteredNavItems.map(item => (
                 <button
                   key={item.id}
-                  onClick={() => setCurrentPage(item.id as Page)}
+                  onClick={() => {
+                    if (isDirty) {
+                      setPendingPage(item.id as Page);
+                      setShowNavWarning(true);
+                    } else {
+                      setCurrentPage(item.id as Page);
+                    }
+                  }}
                   style={{
                     background: currentPage === item.id ? '#334155' : 'transparent',
                     border: 'none',
@@ -117,6 +130,30 @@ const AppContent: React.FC = () => {
       <footer style={{ padding: '2rem 0', textAlign: 'center', color: '#64748b', fontSize: '0.875rem', borderTop: '1px solid #e2e8f0' }}>
         &copy; 2026 PerfectPOS - Sistema de Punto de Venta. Todos los derechos reservados.
       </footer>
+
+      <UnsavedChangesModal
+        isOpen={showNavWarning}
+        message="Tiene una factura en curso con cambios sin guardar. ¿Desea generarla antes de salir?"
+        onCancel={() => {
+          setShowNavWarning(false);
+          setPendingPage(null);
+        }}
+        onDiscard={() => {
+          setDirty(false);
+          setShowNavWarning(false);
+          if (pendingPage) setCurrentPage(pendingPage);
+          setPendingPage(null);
+        }}
+        onSave={async () => {
+          const success = await triggerSave();
+          if (success) {
+            setDirty(false);
+            setShowNavWarning(false);
+            if (pendingPage) setCurrentPage(pendingPage);
+            setPendingPage(null);
+          }
+        }}
+      />
     </div>
   );
 };
@@ -125,7 +162,9 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <AppContent />
+        <UnsavedChangesProvider>
+          <AppContent />
+        </UnsavedChangesProvider>
       </ToastProvider>
     </AuthProvider>
   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ProductApi } from '../../infrastructure/api/ApiRepositories';
 import type { Product } from '../../domain/entities';
 import { Modal, Pagination } from '../components/Shared';
+import { UnsavedChangesModal } from '../components/UnsavedChangesModal';
 import { useToast } from '../components/Toast';
 import { Plus, Edit2, Trash2, Search, Package, Hash, DollarSign, Database, Loader2 } from 'lucide-react';
 import { allowOnlyNumbers, allowOnlyDecimals } from '../utils/InputValidators';
@@ -20,6 +21,10 @@ export const ProductsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Partial<Product> | null>(null);
+  const formRef = React.useRef<HTMLFormElement>(null);
+
   const { showToast } = useToast();
 
   const [formData, setFormData] = useState<Partial<Product>>({
@@ -63,11 +68,31 @@ export const ProductsPage: React.FC = () => {
         isActive: true
       });
     }
+    setInitialFormData(product ? { ...product } : {
+      code: '',
+      name: '',
+      price: 0,
+      stock: 0,
+      appliesIva: true,
+      isActive: true
+    });
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const checkDirty = () => {
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  };
+
+  const handleCloseModal = (reason?: 'close-button' | 'backdrop' | 'cancel') => {
+    if ((reason === 'close-button' || reason === 'backdrop') && checkDirty()) {
+      setShowUnsavedWarning(true);
+    } else {
+      setIsModalOpen(false);
+    }
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsSaving(true);
     try {
       if (editingProduct) {
@@ -221,10 +246,10 @@ export const ProductsPage: React.FC = () => {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         title={editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
       >
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} ref={formRef}>
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Código de Producto</label>
             <div className="input-group">
@@ -317,7 +342,7 @@ export const ProductsPage: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--slate-200)' }}>
-            <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} style={{ padding: '0.75rem 1.5rem' }} disabled={isSaving}>Cancelar</button>
+            <button type="button" className="btn-secondary" onClick={() => handleCloseModal('cancel')} style={{ padding: '0.75rem 1.5rem' }} disabled={isSaving}>Cancelar</button>
             <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} disabled={isSaving}>
               {isSaving ? <><Loader2 size={18} className="animate-spin" /> Guardando...</> : 'Guardar Producto'}
             </button>
@@ -343,6 +368,24 @@ export const ProductsPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      <UnsavedChangesModal
+        isOpen={showUnsavedWarning}
+        message="Tiene cambios sin guardar en el producto. ¿Desea guardarlos antes de salir?"
+        onCancel={() => setShowUnsavedWarning(false)}
+        onDiscard={() => {
+          setShowUnsavedWarning(false);
+          setIsModalOpen(false);
+        }}
+        onSave={() => {
+          setShowUnsavedWarning(false);
+          if (formRef.current) {
+            formRef.current.requestSubmit();
+          } else {
+            handleSubmit();
+          }
+        }}
+      />
     </div>
   );
 };
