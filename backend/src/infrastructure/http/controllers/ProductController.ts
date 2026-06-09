@@ -21,7 +21,8 @@ export class ProductController {
 
   async postProduct(req: Request, res: Response) {
     try {
-      const product = await this.createProduct.execute(req.body);
+      const userId = (req as any).user.id;
+      const product = await this.createProduct.execute(req.body, userId);
       res.status(201).json(product);
     } catch (error: any) {
       res.status(400).json({ message: error.message });

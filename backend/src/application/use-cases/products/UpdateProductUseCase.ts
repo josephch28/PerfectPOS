@@ -24,6 +24,6 @@ export class UpdateProductUseCase {
       }
     }
 
-    return this.productRepo.update(id, { ...productData, lastUpdatedById: userId });
+    return this.productRepo.update(id, { ...productData, lastUpdatedById: userId }, userId);
   }
 }

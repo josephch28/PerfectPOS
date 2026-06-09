@@ -3,6 +3,7 @@ import { ProductApi } from '../../infrastructure/api/ApiRepositories';
 import type { Product } from '../../domain/entities';
 import { Modal, Pagination } from '../components/Shared';
 import { UnsavedChangesModal } from '../components/UnsavedChangesModal';
+import { DuplicateProductModal } from '../components/DuplicateProductModal';
 import { useToast } from '../components/Toast';
 import { Plus, Edit2, Trash2, Search, Package, Hash, DollarSign, Database, Loader2 } from 'lucide-react';
 import { allowOnlyNumbers, allowOnlyDecimals } from '../utils/InputValidators';
@@ -20,6 +21,8 @@ export const ProductsPage: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [duplicateConflict, setDuplicateConflict] = useState<any>(null);
   
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [initialFormData, setInitialFormData] = useState<Partial<Product> | null>(null);
@@ -105,7 +108,37 @@ export const ProductsPage: React.FC = () => {
       setIsModalOpen(false);
       fetchProducts();
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Error al guardar producto', 'error');
+      const msg = error.response?.data?.message || 'Error al guardar producto';
+      try {
+        const parsed = JSON.parse(msg);
+        if (parsed.type === 'DUPLICATE_PRODUCT_NAME') {
+          setDuplicateConflict(parsed.existingProduct);
+          setIsDuplicateModalOpen(true);
+          return;
+        }
+      } catch (e) {
+        // Not a JSON string, fallback to standard toast
+      }
+      showToast(msg, 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDuplicateAddStock = async () => {
+    if (!duplicateConflict) return;
+    setIsSaving(true);
+    try {
+      const stockToAdd = Number(formData.stock) || 0;
+      await ProductApi.update(duplicateConflict.id, {
+        stock: duplicateConflict.stock + stockToAdd
+      });
+      showToast('Stock sumado exitosamente al producto existente', 'success');
+      setIsDuplicateModalOpen(false);
+      setIsModalOpen(false);
+      fetchProducts();
+    } catch (error) {
+      showToast('Error al sumar stock', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -133,6 +166,13 @@ export const ProductsPage: React.FC = () => {
 
   return (
     <div className="container">
+      <DuplicateProductModal 
+        isOpen={isDuplicateModalOpen}
+        productName={duplicateConflict?.name || ''}
+        existingStock={duplicateConflict?.stock || 0}
+        onAddStock={handleDuplicateAddStock}
+        onChangeName={() => setIsDuplicateModalOpen(false)}
+      />
       <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '2.25rem', fontWeight: 800, color: 'var(--slate-900)' }}>Gestión de Productos</h1>

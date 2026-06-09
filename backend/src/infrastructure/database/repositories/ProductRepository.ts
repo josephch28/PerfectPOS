@@ -85,17 +85,58 @@ export class PrismaProductRepository implements IProductRepository {
     return product ? this.mapToProduct(product) : null;
   }
 
-  async create(product: Product) {
-    const created = await this.prisma.product.create({ data: product as any });
-    return this.mapToProduct(created);
+  async findByName(name: string) {
+    const product = await this.prisma.product.findFirst({ where: { name } });
+    return product ? this.mapToProduct(product) : null;
   }
 
-  async update(id: string, product: Partial<Product>) {
-    const updated = await this.prisma.product.update({
-      where: { id },
-      data: product as any
+  async create(product: Product, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const created = await tx.product.create({ data: product as any });
+      
+      if (userId && created.stock > 0) {
+        await tx.stockMovement.create({
+          data: {
+            productId: created.id,
+            type: 'IN',
+            quantity: created.stock,
+            stockBefore: 0,
+            stockAfter: created.stock,
+            userId: userId,
+            reference: 'Initial Stock'
+          }
+        });
+      }
+      
+      return this.mapToProduct(created);
     });
-    return this.mapToProduct(updated);
+  }
+
+  async update(id: string, product: Partial<Product>, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const oldProduct = await tx.product.findUnique({ where: { id } });
+      const updated = await tx.product.update({
+        where: { id },
+        data: product as any
+      });
+
+      if (userId && oldProduct && oldProduct.stock !== updated.stock) {
+        const diff = updated.stock - oldProduct.stock;
+        await tx.stockMovement.create({
+          data: {
+            productId: updated.id,
+            type: diff > 0 ? 'ADJUSTMENT_IN' : 'ADJUSTMENT_OUT',
+            quantity: Math.abs(diff),
+            stockBefore: oldProduct.stock,
+            stockAfter: updated.stock,
+            userId: userId,
+            reference: 'Manual Adjustment'
+          }
+        });
+      }
+
+      return this.mapToProduct(updated);
+    });
   }
 
   async delete(id: string) {

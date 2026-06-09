@@ -15,8 +15,11 @@ export interface ICustomerRepository extends IBaseRepository<Customer> {
 
 export interface IProductRepository extends IBaseRepository<Product> {
   findByCode(code: string): Promise<Product | null>;
+  findByName(name: string): Promise<Product | null>;
   hasSales(id: string): Promise<boolean>;
   updateStock(id: string, quantity: number): Promise<void>;
+  create(entity: Product, userId?: string): Promise<Product>;
+  update(id: string, entity: Partial<Product>, userId?: string): Promise<Product>;
 }
 
 export interface ISaleRepository {
