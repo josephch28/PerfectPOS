@@ -43,8 +43,8 @@ La base de datos actual utiliza **MySQL** y contiene las siguientes entidades pr
 
 ## 🚀 Opciones de Despliegue
 
-### 1. Despliegue en la Nube (Todo-en-Uno)
-Si quieres subir el sistema a internet de forma gratuita para que cualquiera pueda acceder, utilizando **Railway.app** para hospedar el Frontend, Backend y la Base de Datos MySQL en un solo lugar, consulta la **[Guía de Despliegue en la Nube (Railway)](./DEPLOYMENT_RAILWAY.md)**.
+### 1. Despliegue en la Nube (La Opción Más Fácil)
+Para subir el sistema a internet de forma gratuita manteniendo tu entorno local intacto (separación total de entornos), usando **Aiven** para la BD, **Render** para el Backend y **Vercel** para el Frontend, consulta la **[Guía de Despliegue en la Nube](./DEPLOYMENT_CLOUD.md)**.
 
 ### 2. Despliegue en Red Local / Máquina Virtual
 Si deseas ejecutar el Backend y Frontend en una máquina virtual Linux (Ubuntu) mientras mantienes tu Base de Datos en Windows, consulta la **[Guía de Despliegue en Linux (Ubuntu)](./DEPLOYMENT_LINUX.md)** que hemos preparado con los pasos exactos de configuración de red y base de datos.
