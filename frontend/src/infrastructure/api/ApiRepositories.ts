@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { Client, Product, Invoice, User, Role } from '../../domain/entities';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
 });
 
 // Interceptor to add token to requests
