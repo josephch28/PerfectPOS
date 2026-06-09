@@ -56,11 +56,15 @@ export class PrismaSaleRepository implements ISaleRepository {
         for (const detail of sale.details) {
           const product = await tx.product.findUnique({ where: { id: detail.productId } });
           if (!product) throw new Error(`Product ${detail.productId} not found`);
-          
-          await tx.product.update({
+
+          const updatedProduct = await tx.product.update({
             where: { id: detail.productId },
             data: { stock: { decrement: detail.quantity } }
           });
+
+          if (updatedProduct.stock < 0) {
+            throw new Error(`Stock insuficiente para ${detail.productName}. Disponible: ${product.stock}, Solicitado: ${detail.quantity}`);
+          }
 
           // Register Stock Movement
           await tx.stockMovement.create({
@@ -174,11 +178,15 @@ export class PrismaSaleRepository implements ISaleRepository {
         for (const detail of sale.details) {
           const product = await tx.product.findUnique({ where: { id: detail.productId } });
           if (!product) throw new Error(`Product ${detail.productId} not found`);
-          
-          await tx.product.update({
+
+          const updatedProduct = await tx.product.update({
             where: { id: detail.productId },
             data: { stock: { decrement: detail.quantity } }
           });
+
+          if (updatedProduct.stock < 0) {
+            throw new Error(`Stock insuficiente para ${detail.productName}. Disponible: ${product.stock}, Solicitado: ${detail.quantity}`);
+          }
 
           await tx.stockMovement.create({
             data: {
