@@ -16,16 +16,16 @@ export class UpdateUserUseCase {
 
     const spaceRegex = /\s/;
     if (userData.firstName && spaceRegex.test(userData.firstName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (userData.firstLastName && spaceRegex.test(userData.firstLastName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (userData.middleName && spaceRegex.test(userData.middleName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (userData.secondLastName && spaceRegex.test(userData.secondLastName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
 
     if (userData.email) {

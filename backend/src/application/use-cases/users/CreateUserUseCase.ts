@@ -16,18 +16,18 @@ export class CreateUserUseCase {
     }
 
     if (!userData.firstName || !userData.firstLastName) {
-      throw new Error("firstName and firstLastName are required");
+      throw new Error("El primer nombre y el primer apellido son obligatorios");
     }
 
     const spaceRegex = /\s/;
     if (spaceRegex.test(userData.firstName) || spaceRegex.test(userData.firstLastName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (userData.middleName && spaceRegex.test(userData.middleName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (userData.secondLastName && spaceRegex.test(userData.secondLastName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
 
     if (!Validators.isValidEmail(userData.email)) {

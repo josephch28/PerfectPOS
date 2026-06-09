@@ -16,18 +16,18 @@ export class CreateCustomerUseCase {
     
     // Basic validations
     if (!customerData.firstName || !customerData.firstLastName) {
-      throw new Error("firstName and firstLastName are required");
+      throw new Error("El primer nombre y el primer apellido son obligatorios");
     }
 
     const spaceRegex = /\s/;
     if (spaceRegex.test(customerData.firstName) || spaceRegex.test(customerData.firstLastName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (customerData.middleName && spaceRegex.test(customerData.middleName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (customerData.secondLastName && spaceRegex.test(customerData.secondLastName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
 
     if (customerData.phone && !Validators.isValidPhone(customerData.phone)) {

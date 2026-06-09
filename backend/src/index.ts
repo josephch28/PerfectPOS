@@ -140,7 +140,7 @@ async function startServer() {
 
     try {
       await logErrorUC.execute({
-        message: err.message || 'Internal Server Error',
+        message: err.message || 'Error interno del servidor',
         exceptionType: err.name,
         stackTrace: err.stack,
         source: req.path,

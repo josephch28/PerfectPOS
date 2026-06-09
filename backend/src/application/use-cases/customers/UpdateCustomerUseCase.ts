@@ -9,16 +9,16 @@ export class UpdateCustomerUseCase {
     const spaceRegex = /\s/;
     
     if (customerData.firstName && spaceRegex.test(customerData.firstName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (customerData.firstLastName && spaceRegex.test(customerData.firstLastName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (customerData.middleName && spaceRegex.test(customerData.middleName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
     if (customerData.secondLastName && spaceRegex.test(customerData.secondLastName)) {
-      throw new Error("Names cannot contain spaces");
+      throw new Error("Los nombres no pueden contener espacios");
     }
 
     if (customerData.phone && !Validators.isValidPhone(customerData.phone)) {
