@@ -15,6 +15,8 @@ export const HistoryPage: React.FC = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [searchField, setSearchField] = useState('number'); 
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [invoiceToCancel, setInvoiceToCancel] = useState<number | null>(null);
 
   // Implement Debounce for search to avoid API spam on fast typing
   useEffect(() => {
@@ -42,15 +44,25 @@ export const HistoryPage: React.FC = () => {
     }
   };
 
-  const handleVoid = async (id: number) => {
-    if (window.confirm('¿Está seguro de anular esta factura? Esta acción devolverá el stock a los productos.')) {
+  const handleVoid = (id: number) => {
+    setInvoiceToCancel(id);
+    setIsCancelModalOpen(true);
+  };
+
+  const confirmVoid = async () => {
+    if (invoiceToCancel !== null) {
       try {
-        await InvoiceApi.delete(id);
+        await InvoiceApi.delete(invoiceToCancel);
         showToast('Factura anulada correctamente', 'success');
         loadInvoices();
-        setSelectedInvoice(null);
+        if (selectedInvoice?.id === invoiceToCancel) {
+          setSelectedInvoice(null);
+        }
       } catch (error) {
         showToast('Error al anular la factura', 'error');
+      } finally {
+        setIsCancelModalOpen(false);
+        setInvoiceToCancel(null);
       }
     }
   };
@@ -72,6 +84,25 @@ export const HistoryPage: React.FC = () => {
         <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>Historial de Facturación</h1>
         <p className="text-muted">Consulte, anule o descargue copias de sus facturas emitidas.</p>
       </header>
+
+      <Modal 
+        isOpen={isCancelModalOpen} 
+        onClose={() => setIsCancelModalOpen(false)} 
+        title="Anular Factura"
+        zIndex={10000}
+      >
+        <p style={{ margin: '0 0 1.5rem 0', color: 'var(--slate-600)', lineHeight: '1.5' }}>
+          ¿Está seguro de anular esta factura? Esta acción <strong>devolverá el stock</strong> a los productos correspondientes y marcará la factura como anulada en el historial. Esta acción no se puede deshacer.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+          <button onClick={() => setIsCancelModalOpen(false)} className="btn-secondary" style={{ padding: '0.75rem 1.5rem', fontSize: '1rem' }}>
+            Conservar Factura
+          </button>
+          <button onClick={confirmVoid} className="btn-primary" style={{ background: 'var(--danger)', padding: '0.75rem 1.5rem', fontSize: '1rem', border: 'none' }}>
+            Sí, Anular Factura
+          </button>
+        </div>
+      </Modal>
       
       <div className="card">
         <div className="input-group" style={{ maxWidth: '600px', marginBottom: '2rem' }}>
