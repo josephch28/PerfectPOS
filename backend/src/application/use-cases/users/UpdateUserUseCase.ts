@@ -11,7 +11,7 @@ export class UpdateUserUseCase {
 
   async execute(id: string, userData: Partial<User>, adminId?: string) {
     if (userData.cedula && !Validators.isValidCedula(userData.cedula)) {
-      throw new Error("La cédula/RUC debe tener exactamente 10 dígitos numéricos.");
+      throw new Error("La cédula/RUC debe tener 10 o 13 dígitos numéricos válidos.");
     }
 
     const spaceRegex = /\s/;

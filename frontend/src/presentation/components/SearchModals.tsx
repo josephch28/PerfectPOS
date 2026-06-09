@@ -139,12 +139,13 @@ export const ClientSearchModal: React.FC<ClientSearchModalProps> = ({ isOpen, on
                   onKeyDown={allowOnlyNumbers}
                   placeholder="Ej: 1712345678"
                   required
-                  pattern="\d{10}"
-                  maxLength={10}
+                  pattern="^(\d{10}|\d{10}001)$"
+                  maxLength={13}
+                  title="Debe tener 10 o 13 dígitos numéricos"
                 />
             </div>
             {formData.id && formData.id.length < 10 && (
-              <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>La cédula debe tener exactamente 10 dígitos numéricos</span>
+              <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>La cédula debe tener 10 o 13 dígitos numéricos</span>
             )}
           </div>
 

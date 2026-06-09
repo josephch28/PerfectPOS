@@ -232,8 +232,9 @@ export const CustomersPage: React.FC = () => {
                   placeholder="Ej: 1712345678"
                   required
                   disabled={!!editingCustomer}
-                  pattern="\d{10}"
-                  maxLength={10}
+                  pattern="^(\d{10}|\d{10}001)$"
+                  maxLength={13}
+                  title="Debe tener 10 o 13 dígitos numéricos"
                 />
             </div>
             {formData.id && formData.id.length < 10 && (

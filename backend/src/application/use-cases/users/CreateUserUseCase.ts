@@ -12,7 +12,7 @@ export class CreateUserUseCase {
 
   async execute(userData: User) {
     if (userData.cedula && !Validators.isValidCedula(userData.cedula)) {
-      throw new Error("La cédula/RUC debe tener exactamente 10 dígitos numéricos.");
+      throw new Error("La cédula/RUC debe tener 10 o 13 dígitos numéricos válidos.");
     }
 
     if (!userData.firstName || !userData.firstLastName) {

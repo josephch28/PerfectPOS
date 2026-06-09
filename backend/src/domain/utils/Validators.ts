@@ -7,7 +7,7 @@ export class Validators {
 
   static isValidCedula(cedula: string | null | undefined): boolean {
     if (!cedula) return false;
-    const cedulaRegex = /^\d{10}$/;
+    const cedulaRegex = /^(\d{10}|\d{10}001)$/;
     return cedulaRegex.test(cedula);
   }
 

@@ -293,8 +293,9 @@ export const UsersPage: React.FC = () => {
                   onKeyDown={allowOnlyNumbers}
                   placeholder="Ej: 1712345678"
                   required
-                  pattern="\d{10}"
-                  maxLength={10}
+                  pattern="^(\d{10}|\d{10}001)$"
+                  maxLength={13}
+                  title="Debe tener 10 o 13 dígitos numéricos"
                 />
               </div>
               {formData.cedula && formData.cedula.length < 10 && (
