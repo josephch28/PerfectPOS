@@ -407,8 +407,8 @@ export const InvoicePage: React.FC = () => {
               }
             }
             setItemToDelete(null);
-          }} className="btn-secondary">Cancelar</button>
-          <button onClick={() => { if(itemToDelete) removeItem(itemToDelete); setItemToDelete(null); }} className="btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }}>Eliminar</button>
+          }} className="btn-secondary" style={{ padding: '0.75rem 1.5rem', fontSize: '1rem' }}>Cancelar</button>
+          <button onClick={() => { if(itemToDelete) removeItem(itemToDelete); setItemToDelete(null); }} className="btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)', padding: '0.75rem 1.5rem', fontSize: '1rem' }}>Eliminar</button>
         </div>
       </Modal>
       <ConcurrencyModal
