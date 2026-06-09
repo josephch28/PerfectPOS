@@ -41,6 +41,10 @@ La base de datos actual utiliza **MySQL** y contiene las siguientes entidades pr
 - **StockMovements:** Historial detallado de todas las entradas y salidas de inventario por compras o facturaciones.
 - **ErrorLogs:** Registro de errores del sistema para auditoría y depuración.
 
+## 🚀 Despliegue en Red Local / Máquina Virtual
+
+Si deseas ejecutar el Backend y Frontend en una máquina virtual Linux (Ubuntu) mientras mantienes tu Base de Datos en Windows, consulta la **[Guía de Despliegue en Linux (Ubuntu)](./DEPLOYMENT_LINUX.md)** que hemos preparado con los pasos exactos de configuración de red y base de datos.
+
 ## Guía de Instalación
 
 ### Requisitos Previos
@@ -103,11 +107,11 @@ El *seed* genera usuarios automáticos para probar el sistema:
 
 **Administrador:**
 - **Usuario:** `admin`
-- **Contraseña:** `admin123`
+- **Contraseña:** `Admin123*`
 
 **Vendedor:**
 - **Usuario:** `seller`
-- **Contraseña:** `seller123`
+- **Contraseña:** `Seller123*`
 
 ## Partes Importantes del Código
 
