@@ -8,8 +8,8 @@ export class CreateProductUseCase {
     if (productData.price <= 0) {
       throw new Error("El precio del producto debe ser mayor a 0.");
     }
-    if (productData.stock < 0) {
-      throw new Error("El stock inicial no puede ser negativo.");
+    if (productData.stock <= 0) {
+      throw new Error("El stock inicial debe ser mayor a 0.");
     }
 
     const existingProductByCode = await this.productRepo.findByCode(productData.code);

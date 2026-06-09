@@ -18,7 +18,7 @@ export const DuplicateProductModal: React.FC<DuplicateProductModalProps> = ({
   onChangeName,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onChangeName} title="Producto Duplicado">
+    <Modal isOpen={isOpen} onClose={onChangeName} title="Producto Duplicado" zIndex={10001}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.5rem' }}>
         <div style={{ color: 'var(--warning)', background: '#fffbeb', padding: '0.75rem', borderRadius: '50%' }}>
           <AlertCircle size={32} />
