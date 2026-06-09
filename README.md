@@ -41,8 +41,12 @@ La base de datos actual utiliza **MySQL** y contiene las siguientes entidades pr
 - **StockMovements:** Historial detallado de todas las entradas y salidas de inventario por compras o facturaciones.
 - **ErrorLogs:** Registro de errores del sistema para auditoría y depuración.
 
-## 🚀 Despliegue en Red Local / Máquina Virtual
+## 🚀 Opciones de Despliegue
 
+### 1. Despliegue en la Nube (Todo-en-Uno)
+Si quieres subir el sistema a internet de forma gratuita para que cualquiera pueda acceder, utilizando **Railway.app** para hospedar el Frontend, Backend y la Base de Datos MySQL en un solo lugar, consulta la **[Guía de Despliegue en la Nube (Railway)](./DEPLOYMENT_RAILWAY.md)**.
+
+### 2. Despliegue en Red Local / Máquina Virtual
 Si deseas ejecutar el Backend y Frontend en una máquina virtual Linux (Ubuntu) mientras mantienes tu Base de Datos en Windows, consulta la **[Guía de Despliegue en Linux (Ubuntu)](./DEPLOYMENT_LINUX.md)** que hemos preparado con los pasos exactos de configuración de red y base de datos.
 
 ## Guía de Instalación
