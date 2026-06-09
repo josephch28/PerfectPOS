@@ -61,9 +61,8 @@ export class PDFService {
       
       doc.fontSize(10).fillColor('#000000').font('Helvetica');
       doc.text(`RAZÓN SOCIAL:`, 65, clientY + 20);
-      const cName = sale.customerName || '';
-      const cLastName = sale.customerLastName || '';
-      doc.font('Helvetica-Bold').text(`${cName} ${cLastName}`.trim() || 'N/A', 170, clientY + 20);
+      const cFullName = `${sale.customerFirstName || ''} ${sale.customerMiddleName || ''} ${sale.customerFirstLastName || ''} ${sale.customerSecondLastName || ''}`.replace(/\s+/g, ' ').trim();
+      doc.font('Helvetica-Bold').text(cFullName || 'N/A', 170, clientY + 20);
       
       doc.font('Helvetica').text(`RUC / CÉDULA:`, 65, clientY + 35);
       doc.text(`${sale.customerId || 'N/A'}`, 170, clientY + 35);
@@ -138,7 +137,8 @@ export class PDFService {
       // --- Vendedor ---
       totalsY += 40;
       doc.fontSize(9).fillColor(secondaryColor).font('Helvetica');
-      doc.text(`VENDEDOR: ${sale.sellerName || 'N/A'}`, 50, totalsY);
+      const sellerFullName = `${sale.sellerFirstName || ''} ${sale.sellerMiddleName || ''} ${sale.sellerFirstLastName || ''} ${sale.sellerSecondLastName || ''}`.replace(/\s+/g, ' ').trim();
+      doc.text(`VENDEDOR: ${sellerFullName || 'N/A'}`, 50, totalsY);
 
       // --- Pie de página ---
       doc.fontSize(8).fillColor(secondaryColor).font('Helvetica-Oblique');

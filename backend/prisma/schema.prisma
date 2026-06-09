@@ -19,8 +19,10 @@ model Role {
 model User {
   id            String          @id @default(uuid())
   username      String          @unique
-  name          String
-  lastName      String
+  firstName       String
+  middleName      String?
+  firstLastName   String
+  secondLastName  String?
   cedula        String?         @unique
   email         String          @unique
   password      String
@@ -32,6 +34,14 @@ model User {
   sales         Sale[]
   stockMovements StockMovement[]
   errorLogs     ErrorLog[]
+  
+  // Audit fields
+  updatedCustomers Customer[]    @relation("CustomerUpdater")
+  updatedProducts  Product[]     @relation("ProductUpdater")
+  updatedUsers     User[]        @relation("UserUpdater")
+  lastUpdatedById  String?
+  lastUpdatedBy    User?         @relation("UserUpdater", fields: [lastUpdatedById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
@@ -41,20 +51,27 @@ model User {
 }
 
 model Customer {
-  id        String   @id // Cédula/RUC
-  name      String
-  lastName  String
-  phone     String
-  address   String
-  email     String   @unique
-  isActive  Boolean  @default(true)
-  sales     Sale[]
+  id              String   @id // Cédula/RUC
+  firstName       String
+  middleName      String?
+  firstLastName   String
+  secondLastName  String?
+  phone           String
+  address         String
+  email           String   @unique
+  isActive        Boolean  @default(true)
+  sales           Sale[]
+  
+  // Audit fields
+  lastUpdatedById String?
+  lastUpdatedBy   User?    @relation("CustomerUpdater", fields: [lastUpdatedById], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([name])
-  @@index([lastName])
-  @@index([isActive, lastName])
+  @@index([firstName])
+  @@index([firstLastName])
+  @@index([isActive, firstLastName])
 }
 
 model Product {
@@ -67,6 +84,11 @@ model Product {
   isActive       Boolean         @default(true)
   saleDetails    SaleDetail[]
   stockMovements StockMovement[]
+
+  // Audit fields
+  lastUpdatedById String?
+  lastUpdatedBy   User?    @relation("ProductUpdater", fields: [lastUpdatedById], references: [id])
+
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -91,14 +113,19 @@ model Sale {
   status          String        @default("Draft") // Draft, Confirmed, Cancelled
   customerId      String
   customer        Customer      @relation(fields: [customerId], references: [id])
-  customerName      String?
-  customerLastName  String?
+  customerFirstName       String?
+  customerMiddleName      String?
+  customerFirstLastName   String?
+  customerSecondLastName  String?
   customerAddress   String?
   customerPhone     String?
   customerEmail     String?
   userId          String
   user            User          @relation(fields: [userId], references: [id])
-  sellerName      String?
+  sellerFirstName       String?
+  sellerMiddleName      String?
+  sellerFirstLastName   String?
+  sellerSecondLastName  String?
   paymentMethodId String
   paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
   subtotal        Float
@@ -110,8 +137,8 @@ model Sale {
 
   @@index([number])
   @@index([date])
-  @@index([customerName])
-  @@index([customerLastName])
+  @@index([customerFirstName])
+  @@index([customerFirstLastName])
 }
 
 model SaleDetail {

@@ -5,30 +5,38 @@ import { Validators } from '../../../domain/utils/Validators';
 export class UpdateCustomerUseCase {
   constructor(private customerRepo: ICustomerRepository) {}
 
-  async execute(id: string, customerData: Partial<Customer>) {
-    const existingCustomer = await this.customerRepo.findById(id);
-    if (!existingCustomer) {
-      throw new Error("Cliente no encontrado.");
+  async execute(id: string, customerData: Partial<Customer>, adminId?: string) {
+    const spaceRegex = /\s/;
+    
+    if (customerData.firstName && spaceRegex.test(customerData.firstName)) {
+      throw new Error("Names cannot contain spaces");
+    }
+    if (customerData.firstLastName && spaceRegex.test(customerData.firstLastName)) {
+      throw new Error("Names cannot contain spaces");
+    }
+    if (customerData.middleName && spaceRegex.test(customerData.middleName)) {
+      throw new Error("Names cannot contain spaces");
+    }
+    if (customerData.secondLastName && spaceRegex.test(customerData.secondLastName)) {
+      throw new Error("Names cannot contain spaces");
     }
 
-    if (customerData.name && !Validators.isValidName(customerData.name)) {
-      throw new Error("El nombre debe contener únicamente letras.");
-    }
-    if (customerData.lastName && !Validators.isValidName(customerData.lastName)) {
-      throw new Error("El apellido debe contener únicamente letras.");
-    }
     if (customerData.phone && !Validators.isValidPhone(customerData.phone)) {
       throw new Error("El teléfono debe tener exactamente 10 dígitos numéricos.");
     }
 
-    if (customerData.email && customerData.email !== existingCustomer.email) {
+    if (customerData.email) {
       if (!Validators.isValidEmail(customerData.email)) {
         throw new Error("El formato del correo electrónico no es válido.");
       }
-      const emailExists = await this.customerRepo.findByEmail(customerData.email);
-      if (emailExists) {
+      const existingEmail = await this.customerRepo.findByEmail(customerData.email);
+      if (existingEmail && existingEmail.id !== id) {
         throw new Error("El correo electrónico ya está registrado por otro cliente.");
       }
+    }
+
+    if (adminId) {
+      customerData.lastUpdatedById = adminId;
     }
 
     return this.customerRepo.update(id, customerData);

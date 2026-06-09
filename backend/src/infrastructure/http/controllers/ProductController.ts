@@ -30,7 +30,8 @@ export class ProductController {
 
   async putProduct(req: Request, res: Response) {
     try {
-      const product = await this.updateProduct.execute(req.params.id as string, req.body);
+      const userId = (req as any).user.id;
+      const product = await this.updateProduct.execute(req.params.id as string, req.body, userId);
       res.json(product);
     } catch (error: any) {
       res.status(400).json({ message: error.message });

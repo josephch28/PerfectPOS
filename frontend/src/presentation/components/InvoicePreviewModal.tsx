@@ -30,7 +30,7 @@ export const InvoicePreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClo
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
           <div>
-            <strong>Cliente:</strong> {data.client.name} {data.client.lastName}<br />
+            <strong>Cliente:</strong> {`${data.client.firstName || ''} ${data.client.middleName || ''} ${data.client.firstLastName || ''} ${data.client.secondLastName || ''}`.replace(/\s+/g, ' ').trim()}<br />
             <strong>RUC/CI:</strong> {data.client.id}
           </div>
           <div className="text-right">

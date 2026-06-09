@@ -10,8 +10,10 @@ export class PrismaUserRepository implements IUserRepository {
     return {
       id: dbUser.id,
       username: dbUser.username,
-      name: dbUser.name,
-      lastName: dbUser.lastName,
+      firstName: dbUser.firstName,
+      middleName: dbUser.middleName,
+      firstLastName: dbUser.firstLastName,
+      secondLastName: dbUser.secondLastName,
       cedula: dbUser.cedula,
       email: dbUser.email,
       password: dbUser.password,
@@ -43,8 +45,8 @@ export class PrismaUserRepository implements IUserRepository {
       } else {
         where.OR = [
           { username: { contains: search } },
-          { name: { contains: search } },
-          { lastName: { contains: search } },
+          { firstName: { contains: search } },
+          { firstLastName: { contains: search } },
           { email: { contains: search } }
         ];
       }
@@ -102,8 +104,10 @@ export class PrismaUserRepository implements IUserRepository {
     const created = await this.prisma.user.create({
       data: {
         username: user.username,
-        name: user.name,
-        lastName: user.lastName,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        firstLastName: user.firstLastName,
+        secondLastName: user.secondLastName,
         cedula: user.cedula,
         email: user.email,
         password: user.password!,
@@ -122,8 +126,10 @@ export class PrismaUserRepository implements IUserRepository {
       where: { id },
       data: {
         username: user.username,
-        name: user.name,
-        lastName: user.lastName,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        firstLastName: user.firstLastName,
+        secondLastName: user.secondLastName,
         cedula: user.cedula,
         email: user.email,
         password: user.password,

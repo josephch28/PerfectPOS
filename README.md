@@ -1,120 +1,117 @@
-# Sistema de Punto de Venta (POS) - Clean Architecture
+# Sistema de Punto de Venta Básico
 
-Este es un sistema avanzado de Punto de Venta (Facturación) desarrollado con tecnologías web modernas, utilizando **TypeScript** de extremo a extremo, diseñado bajo los principios de **Clean Architecture (Arquitectura Limpia)**. El sistema es capaz de interactuar con múltiples bases de datos de manera simultánea o intercambiable (MySQL mediante Prisma y Oracle DB mediante Knex).
+Este es un sistema completo de punto de venta y facturación construido usando una arquitectura basada en **Clean Architecture**, con **React** para el Frontend y **Node.js + Express** en el Backend utilizando **Prisma ORM** y **MySQL** como motor de base de datos.
 
-## Características Principales
-- **Arquitectura Limpia**: Separación estricta de responsabilidades (Domain, Application, Infrastructure, Presentation).
-- **Multi-Base de Datos**: Implementación del patrón Repository para soportar simultáneamente MySQL y Oracle Database sin acoplar la lógica de negocio.
-- **Inmutabilidad (Snapshotting)**: Las facturas generadas guardan una foto instantánea (snapshot) del cliente y del vendedor en el momento de la compra, garantizando que el historial sea un documento auditable e inmutable incluso si los datos relacionales cambian.
-- **Interfaz Moderna**: Frontend dinámico y reactivo desarrollado en React (Vite) enfocado en la usabilidad y experiencia de usuario (UX/IHC).
-- **Exportación a PDF**: Generación de facturas electrónicas e impresión en formato PDF desde el servidor.
+## Arquitectura del Proyecto (Clean Architecture)
 
----
+El proyecto está dividido en dos partes principales: `frontend` y `backend`. Ambas siguen los principios de Clean Architecture para mantener un código modular, mantenible y escalable.
 
-## Estructura del Proyecto y Capas (Clean Architecture)
+### Capas (Tanto Frontend como Backend)
 
-El proyecto está dividido en dos aplicaciones principales: `frontend` y `backend`. Ambas respetan estrictamente el patrón de capas de Clean Architecture.
+1. **Domain (Dominio):**
+   - Contiene la lógica central del negocio y las entidades del sistema (Ej. Cliente, Usuario, Factura).
+   - En el backend, define las interfaces de los repositorios.
+   - Es totalmente independiente de frameworks o bases de datos externas.
 
-### 1. Capa de Dominio (Domain)
-Ubicación: `src/domain/`
-Es el núcleo de la aplicación. Contiene la lógica de negocio pura y las reglas empresariales independientes de cualquier framework.
-- **Entities**: Interfaces y clases que representan los modelos de negocio (Ej: `Sale`, `Customer`, `User`).
-- **Repositories (Interfaces)**: Los "contratos" o abstracciones que la capa de infraestructura deberá cumplir (Ej: `ISaleRepository`). El dominio dicta QUÉ se necesita hacer, no CÓMO se debe guardar.
+2. **Application (Aplicación):**
+   - Contiene los **Casos de Uso** (Use Cases) del sistema.
+   - Orquesta la lógica llamando a los repositorios y servicios externos, sin saber los detalles de cómo están implementados.
+   - Ejemplo: `CreateSaleUseCase` se encarga de crear la factura y delegar el descuento de stock.
 
-### 2. Capa de Aplicación (Application)
-Ubicación: `src/application/`
-Contiene los "Casos de Uso" de la aplicación. Es la capa que orquesta el flujo de los datos desde el exterior hacia el dominio y viceversa.
-- **Use Cases**: Contienen la lógica de la aplicación (Ej: `CreateSaleUseCase`). Aquí es donde se verifica la lógica (como asegurarse de capturar el "Snapshot" del cliente y el vendedor antes de registrar una factura).
+3. **Infrastructure (Infraestructura):**
+   - Contiene las implementaciones específicas de la tecnología.
+   - **Base de Datos:** Implementaciones de los repositorios usando Prisma.
+   - **HTTP/API:** Controladores de Express (Backend) y llamadas a la API usando Axios (Frontend).
+   - **Servicios Externos:** Generación de PDFs usando PDFKit.
 
-### 3. Capa de Infraestructura (Infrastructure)
-Ubicación: `src/infrastructure/` (En el Backend)
-Esta capa es el "detalle". Todo lo relacionado con tecnologías externas vive aquí. Si queremos cambiar la base de datos de MySQL a PostgreSQL, los únicos archivos que cambian están en esta capa.
-- **Database**:
-  - `repositories/SaleRepository.ts` (Implementación de Prisma para MySQL).
-  - `repositories/oracle/OracleSaleRepository.ts` (Implementación de Knex para Oracle DB).
-- **Http**: Controladores de Express (`controllers/`) y definición de Rutas (`routes/`).
-- **Servicios Externos**: Servicios como la generación de PDFs (`PdfService.ts`) u otras integraciones.
+4. **Presentation (Presentación):**
+   - (Solo Frontend) Contiene los componentes de React, las páginas y la gestión del estado de la interfaz de usuario.
+   - Se comunica con la API a través de la capa de Infraestructura.
 
-### 4. Capa de Presentación (Presentation)
-Ubicación: `src/presentation/` (En el Frontend)
-Es responsable de mostrar la información al usuario y enviar los comandos del usuario hacia las capas internas de la aplicación.
-- **Pages**: Las vistas completas de cada módulo (Facturación, Clientes, Historial).
-- **Components**: Componentes reutilizables de UI (Botones, Tablas, Buscadores, Modales).
+## Estructura de la Base de Datos
 
----
+La base de datos actual utiliza **MySQL** y contiene las siguientes entidades principales:
 
-## Requisitos de Instalación
+- **Users:** Gestiona los accesos, contraseñas encriptadas y roles (Administrador, Vendedor).
+- **Roles:** Define los permisos base.
+- **Customers:** Almacena los clientes registrados. Se utilizan 4 campos atómicos para los nombres (Primer y Segundo Nombre, Primer y Segundo Apellido) para cumplir con buenas prácticas y restricciones académicas de no usar espacios en campos de nombre.
+- **Products:** Catálogo de productos disponibles con su stock y precio.
+- **Sales & SaleDetails:** Almacena el historial de facturación. Guarda una **fotografía** (snapshot) de los datos del cliente y vendedor al momento de la venta para preservar el historial incluso si el cliente es modificado o eliminado después.
+- **PaymentMethods:** Formas de pago (Efectivo, Tarjeta, etc.).
+- **StockMovements:** Historial detallado de todas las entradas y salidas de inventario por compras o facturaciones.
+- **ErrorLogs:** Registro de errores del sistema para auditoría y depuración.
 
-1. **Node.js**: Versión 18+ (Recomendado 20.x).
-2. **Base de Datos MySQL**: (Puede ser mediante XAMPP, Docker o instalación nativa) corriendo en el puerto `3306`.
-3. **Base de Datos Oracle**: (Opcional, necesaria si se usa la implementación dual).
-4. **Git**: Para el control de versiones.
+## Guía de Instalación
 
----
+### Requisitos Previos
+- [Node.js](https://nodejs.org/en/) (v18 o superior)
+- [MySQL](https://www.mysql.com/) (Instalado y en ejecución)
+- [Git](https://git-scm.com/)
 
-## Guía de Instalación y Ejecución
+### Paso 1: Configurar la Base de Datos
+Crea una base de datos en MySQL llamada `puntoventa`:
+```sql
+CREATE DATABASE puntoventa;
+```
 
-### 1. Preparar el Backend
+### Paso 2: Configuración del Backend
+1. Abre una terminal y navega a la carpeta del backend:
+   ```bash
+   cd backend
+   ```
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+3. Configura las variables de entorno. Crea un archivo `.env` en la raíz de la carpeta `backend` con el siguiente contenido:
+   ```env
+   PORT=3000
+   DATABASE_URL="mysql://usuario:contraseña@localhost:3306/puntoventa"
+   JWT_SECRET="tu_secreto_seguro_aqui"
+   ```
+   *Reemplaza `usuario` y `contraseña` por tus credenciales de MySQL.*
+4. Empuja el esquema a la base de datos y genera el cliente de Prisma:
+   ```bash
+   npx prisma db push --force-reset
+   ```
+5. Al finalizar el comando anterior, Prisma ejecutará automáticamente el *seed* (población de datos) configurado en `prisma/seed.ts`, generando los roles, 100 clientes, 100 productos, 100 ventas, y los usuarios por defecto (admin, seller).
+6. Inicia el servidor en modo desarrollo:
+   ```bash
+   npm run dev
+   ```
 
-Abre una terminal y dirígete a la carpeta del backend:
-\`\`\`bash
-cd backend
-npm install
-\`\`\`
+### Paso 3: Configuración del Frontend
+1. Abre otra terminal y navega a la carpeta del frontend:
+   ```bash
+   cd frontend
+   ```
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+3. Configura las variables de entorno. Crea un archivo `.env` en la raíz de la carpeta `frontend`:
+   ```env
+   VITE_API_URL=http://localhost:3000/api
+   ```
+4. Inicia la aplicación de React:
+   ```bash
+   npm run dev
+   ```
 
-#### Configurar Variables de Entorno
-Copia o crea el archivo \`.env\` en la raíz de \`/backend\`. Debe contener la URL de tu base de datos MySQL, el puerto de tu servidor y tu cadena de conexión a Oracle (si aplica):
+### Credenciales por Defecto
+El *seed* genera usuarios automáticos para probar el sistema:
 
-\`\`\`env
-# Ejemplo .env
-PORT=3000
-DATABASE_URL="mysql://root:password@localhost:3306/puntoventa"
-JWT_SECRET="supersecreto123"
+**Administrador:**
+- **Usuario:** `admin`
+- **Contraseña:** `admin123`
 
-# Configuración Oracle (Opcional)
-ORACLE_USER="tu_usuario"
-ORACLE_PASSWORD="tu_password"
-ORACLE_CONNECT_STRING="10.x.x.x:1521/XEPDB1"
-\`\`\`
+**Vendedor:**
+- **Usuario:** `seller`
+- **Contraseña:** `seller123`
 
-#### Migrar y Poblar la Base de Datos
-Sincroniza el esquema de Prisma con MySQL:
-\`\`\`bash
-npx prisma db push
-\`\`\`
+## Partes Importantes del Código
 
-Opcional: Si quieres inicializar o actualizar los campos de Snapshotting en tu base de datos histórica, puedes correr:
-\`\`\`bash
-node populate.js
-\`\`\`
-
-#### Iniciar el Servidor Backend
-\`\`\`bash
-npm run dev
-\`\`\`
-*(El backend quedará corriendo en `http://localhost:3000`)*
-
-### 2. Preparar el Frontend
-
-Abre **otra** terminal y dirígete a la carpeta del frontend:
-\`\`\`bash
-cd frontend
-npm install
-\`\`\`
-
-#### Configurar Variables de Entorno (Frontend)
-Asegúrate de que la URL base de tu API esté configurada, o por defecto usará `http://localhost:3000/api`. En \`frontend/src/infrastructure/api/axios.ts\` se manejan las conexiones hacia el backend.
-
-#### Iniciar el Servidor Frontend
-\`\`\`bash
-npm run dev
-\`\`\`
-*(El frontend quedará corriendo normalmente en `http://localhost:5173` o el puerto indicado en tu terminal)*.
-
----
-
-## Detalles Importantes de Diseño
-
-- **Patrón Snapshot en Facturas**: Para asegurar la inmutabilidad de los reportes y evitar que actualizaciones futuras en la base de clientes (por ejemplo, alguien cambiando su nombre legal) afecten facturas antiguas, el sistema clona los datos del `Customer` y el `User` (Vendedor) en la tabla `Sales` al momento de la facturación.
-- **Inyección de Dependencias**: El backend está programado de forma modular. Gracias a la Inyección de Dependencias, es posible alternar entre el repositorio de Oracle y Prisma con cambiar una simple variable en `index.ts`, lo que le da a la aplicación flexibilidad de nivel empresarial.
-- **Rendimiento**: Se han aplicado Índices de Base de Datos en columnas de texto clave (`customerName`, `customerLastName`) asegurando que búsquedas en millones de registros se resuelvan instantáneamente.
+- **`CreateSaleUseCase` (`backend/src/application/use-cases/sales/CreateSaleUseCase.ts`):** Este es el corazón de la facturación. Se encarga de guardar un *snapshot* (copia estática) de los datos del cliente y del vendedor al momento de la creación de la factura para evitar que cambios futuros alteren el historial de facturas.
+- **`PrismaSaleRepository` (`backend/src/infrastructure/database/repositories/SaleRepository.ts`):** Maneja la transacción de creación de ventas. Se encarga de descontar el stock del producto de manera transaccional y guardar el registro del movimiento de inventario (`StockMovement`).
+- **Validadores del Frontend (`frontend/src/presentation/utils/InputValidators.ts`):** Para cumplir con las reglas estrictas de no incluir espacios en los nombres, los componentes de formulario restringen la entrada de teclado mediante la propiedad `onKeyDown` bloqueando explícitamente la barra espaciadora y usando expresiones regulares.
+- **Generación de PDF (`backend/src/infrastructure/pdf/PdfService.ts`):** Utiliza la librería PDFKit para renderizar un documento de factura profesional utilizando los datos atomizados recuperados del *snapshot* de la venta.

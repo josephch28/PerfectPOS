@@ -110,7 +110,7 @@ export const HistoryPage: React.FC = () => {
                   <div style={{ fontSize: '0.75rem' }}>{new Date(inv.date).toLocaleTimeString()}</div>
                 </td>
                 <td style={{ fontWeight: 500 }}>
-                  {inv.customerName ? `${inv.customerName} ${inv.customerLastName || ''}`.trim() : 'N/A'}
+                  {inv.customerFirstName ? `${inv.customerFirstName || ''} ${inv.customerMiddleName || ''} ${inv.customerFirstLastName || ''} ${inv.customerSecondLastName || ''}`.replace(/\s+/g, ' ').trim() : 'N/A'}
                 </td>
                 <td className="text-right" style={{ fontWeight: 700 }}>${inv.total.toFixed(2)}</td>
                 <td className="text-center">
@@ -186,9 +186,9 @@ export const HistoryPage: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem', padding: '1rem', background: 'var(--slate-50)', borderRadius: '8px' }}>
               <div>
                 <p className="text-muted" style={{ margin: '0 0 0.2rem 0', fontSize: '0.7rem', fontWeight: 700 }}>ADQUIRIENTE</p>
-                <p style={{ margin: 0, fontWeight: 600 }}>{selectedInvoice.customerName ? `${selectedInvoice.customerName} ${selectedInvoice.customerLastName || ''}`.trim() : 'N/A'}</p>
+                <p style={{ margin: 0, fontWeight: 600 }}>{selectedInvoice.customerFirstName ? `${selectedInvoice.customerFirstName || ''} ${selectedInvoice.customerMiddleName || ''} ${selectedInvoice.customerFirstLastName || ''} ${selectedInvoice.customerSecondLastName || ''}`.replace(/\s+/g, ' ').trim() : 'N/A'}</p>
                 <p style={{ margin: 0, fontSize: '0.85rem' }}>ID: {selectedInvoice.customerId}</p>
-                <p style={{ margin: 0, fontSize: '0.85rem' }}>Vendedor: {selectedInvoice.sellerName || 'N/A'}</p>
+                <p style={{ margin: 0, fontSize: '0.85rem' }}>Vendedor: {selectedInvoice.sellerFirstName ? `${selectedInvoice.sellerFirstName || ''} ${selectedInvoice.sellerMiddleName || ''} ${selectedInvoice.sellerFirstLastName || ''} ${selectedInvoice.sellerSecondLastName || ''}`.replace(/\s+/g, ' ').trim() : 'N/A'}</p>
               </div>
               <div className="text-right">
                 <p className="text-muted" style={{ margin: '0 0 0.2rem 0', fontSize: '0.7rem', fontWeight: 700 }}>DOCUMENTO</p>

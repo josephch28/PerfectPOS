@@ -2,36 +2,13 @@ import express from 'express';
 import 'express-async-errors';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
-import { 
-  PrismaCustomerRepository 
-} from './infrastructure/database/repositories/CustomerRepository';
-import { 
-  PrismaProductRepository 
-} from './infrastructure/database/repositories/ProductRepository';
-import { 
-  PrismaSaleRepository 
-} from './infrastructure/database/repositories/SaleRepository';
-import { 
-  PrismaUserRepository 
-} from './infrastructure/database/repositories/UserRepository';
-import { 
-  PrismaRoleRepository 
-} from './infrastructure/database/repositories/RoleRepository';
-import { 
-  PrismaErrorLogRepository 
-} from './infrastructure/database/repositories/ErrorLogRepository';
-import { 
-  PrismaPaymentMethodRepository 
-} from './infrastructure/database/repositories/PaymentMethodRepository';
-
-import { oracleDb } from './infrastructure/database/oracle-connection';
-import { OracleCustomerRepository } from './infrastructure/database/repositories/oracle/OracleCustomerRepository';
-import { OracleProductRepository } from './infrastructure/database/repositories/oracle/OracleProductRepository';
-import { OracleSaleRepository } from './infrastructure/database/repositories/oracle/OracleSaleRepository';
-import { OracleUserRepository } from './infrastructure/database/repositories/oracle/OracleUserRepository';
-import { OracleRoleRepository } from './infrastructure/database/repositories/oracle/OracleRoleRepository';
-import { OracleErrorLogRepository } from './infrastructure/database/repositories/oracle/OracleErrorLogRepository';
-import { OraclePaymentMethodRepository } from './infrastructure/database/repositories/oracle/OraclePaymentMethodRepository';
+import { PrismaCustomerRepository } from './infrastructure/database/repositories/CustomerRepository';
+import { PrismaProductRepository } from './infrastructure/database/repositories/ProductRepository';
+import { PrismaSaleRepository } from './infrastructure/database/repositories/SaleRepository';
+import { PrismaUserRepository } from './infrastructure/database/repositories/UserRepository';
+import { PrismaRoleRepository } from './infrastructure/database/repositories/RoleRepository';
+import { PrismaErrorLogRepository } from './infrastructure/database/repositories/ErrorLogRepository';
+import { PrismaPaymentMethodRepository } from './infrastructure/database/repositories/PaymentMethodRepository';
 
 import { 
   LoginUseCase,
@@ -78,27 +55,14 @@ async function startServer() {
   const pdfService = new PDFService();
 
   // Repositories
-  let customerRepo, productRepo, saleRepo, userRepo, roleRepo, errorLogRepo, paymentMethodRepo;
-
-  if (process.env.DB_PROVIDER === 'oracle') {
-    console.log("🟢 Using ORACLE Database Repositories");
-    customerRepo = new OracleCustomerRepository(oracleDb);
-    productRepo = new OracleProductRepository(oracleDb);
-    saleRepo = new OracleSaleRepository(oracleDb);
-    userRepo = new OracleUserRepository(oracleDb);
-    roleRepo = new OracleRoleRepository(oracleDb);
-    errorLogRepo = new OracleErrorLogRepository(oracleDb);
-    paymentMethodRepo = new OraclePaymentMethodRepository(oracleDb);
-  } else {
-    console.log("🔵 Using MYSQL (Prisma) Database Repositories");
-    customerRepo = new PrismaCustomerRepository(prisma);
-    productRepo = new PrismaProductRepository(prisma);
-    saleRepo = new PrismaSaleRepository(prisma);
-    userRepo = new PrismaUserRepository(prisma);
-    roleRepo = new PrismaRoleRepository(prisma);
-    errorLogRepo = new PrismaErrorLogRepository(prisma);
-    paymentMethodRepo = new PrismaPaymentMethodRepository(prisma);
-  }
+  console.log("🔵 Using MYSQL (Prisma) Database Repositories");
+  const customerRepo = new PrismaCustomerRepository(prisma);
+  const productRepo = new PrismaProductRepository(prisma);
+  const saleRepo = new PrismaSaleRepository(prisma);
+  const userRepo = new PrismaUserRepository(prisma);
+  const roleRepo = new PrismaRoleRepository(prisma);
+  const errorLogRepo = new PrismaErrorLogRepository(prisma);
+  const paymentMethodRepo = new PrismaPaymentMethodRepository(prisma);
 
   // Use Cases
   const logErrorUC = new LogErrorUseCase(errorLogRepo);

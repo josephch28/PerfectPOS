@@ -85,14 +85,14 @@ export class PrismaProductRepository implements IProductRepository {
   }
 
   async create(product: Product) {
-    const created = await this.prisma.product.create({ data: product });
+    const created = await this.prisma.product.create({ data: product as any });
     return this.mapToProduct(created);
   }
 
   async update(id: string, product: Partial<Product>) {
     const updated = await this.prisma.product.update({
       where: { id },
-      data: product
+      data: product as any
     });
     return this.mapToProduct(updated);
   }

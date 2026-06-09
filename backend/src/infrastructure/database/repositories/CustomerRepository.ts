@@ -8,8 +8,10 @@ export class PrismaCustomerRepository implements ICustomerRepository {
   private mapToCustomer(dbCustomer: any): Customer {
     return {
       id: dbCustomer.id,
-      name: dbCustomer.name,
-      lastName: dbCustomer.lastName,
+      firstName: dbCustomer.firstName,
+      middleName: dbCustomer.middleName,
+      firstLastName: dbCustomer.firstLastName,
+      secondLastName: dbCustomer.secondLastName,
       phone: dbCustomer.phone,
       address: dbCustomer.address,
       email: dbCustomer.email,
@@ -26,17 +28,17 @@ export class PrismaCustomerRepository implements ICustomerRepository {
     }
 
     if (search) {
-      if (searchField === 'name') {
-        where.name = { startsWith: search };
-      } else if (searchField === 'lastName') {
-        where.lastName = { startsWith: search };
+      if (searchField === 'firstName') {
+        where.firstName = { startsWith: search };
+      } else if (searchField === 'firstLastName') {
+        where.firstLastName = { startsWith: search };
       } else if (searchField === 'cedula') {
         where.id = { startsWith: search };
       } else {
         where.OR = [
           { id: { startsWith: search } },
-          { name: { startsWith: search } },
-          { lastName: { startsWith: search } },
+          { firstName: { startsWith: search } },
+          { firstLastName: { startsWith: search } },
           { email: { startsWith: search } }
         ];
       }
@@ -63,7 +65,7 @@ export class PrismaCustomerRepository implements ICustomerRepository {
       take: actualTake,
       select: { id: true },
       where,
-      orderBy: { lastName: sortDir as any }
+      orderBy: { firstLastName: sortDir as any }
     });
 
     let data: any[] = [];
@@ -71,7 +73,7 @@ export class PrismaCustomerRepository implements ICustomerRepository {
       const ids = idsResult.map(c => c.id);
       data = await this.prisma.customer.findMany({
         where: { id: { in: ids } },
-        orderBy: { lastName: 'asc' }
+        orderBy: { firstLastName: 'asc' }
       });
     }
 
@@ -89,14 +91,14 @@ export class PrismaCustomerRepository implements ICustomerRepository {
   }
 
   async create(customer: Customer) {
-    const created = await this.prisma.customer.create({ data: customer });
+    const created = await this.prisma.customer.create({ data: customer as any });
     return this.mapToCustomer(created);
   }
 
   async update(id: string, customer: Partial<Customer>) {
     const updated = await this.prisma.customer.update({
       where: { id },
-      data: customer
+      data: customer as any
     });
     return this.mapToCustomer(updated);
   }

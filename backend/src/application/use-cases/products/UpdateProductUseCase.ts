@@ -4,7 +4,7 @@ import { Product } from '../../../domain/entities/index';
 export class UpdateProductUseCase {
   constructor(private productRepo: IProductRepository) {}
 
-  async execute(id: string, productData: Partial<Product>) {
+  async execute(id: string, productData: Partial<Product>, userId: string) {
     const existingProduct = await this.productRepo.findById(id);
     if (!existingProduct) {
       throw new Error("Producto no encontrado.");
@@ -24,6 +24,6 @@ export class UpdateProductUseCase {
       }
     }
 
-    return this.productRepo.update(id, productData);
+    return this.productRepo.update(id, { ...productData, lastUpdatedById: userId });
   }
 }

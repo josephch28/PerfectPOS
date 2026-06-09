@@ -29,7 +29,8 @@ export class UserController {
 
   async putUser(req: Request, res: Response) {
     try {
-      const user = await this.updateUser.execute(req.params.id as string, req.body);
+      const currentUserId = (req as any).user.id;
+      const user = await this.updateUser.execute(req.params.id as string, req.body, currentUserId);
       res.json(user);
     } catch (error: any) {
       res.status(400).json({ message: error.message });

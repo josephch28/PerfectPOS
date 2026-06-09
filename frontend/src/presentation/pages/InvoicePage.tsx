@@ -192,7 +192,7 @@ export const InvoicePage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div>
                   <p className="text-muted" style={{ margin: '0 0 0.25rem 0' }}>Nombre / Razón Social</p>
-                  <p style={{ margin: 0, fontWeight: 600 }}>{selectedClient.name} {selectedClient.lastName}</p>
+                  <p style={{ margin: 0, fontWeight: 600 }}>{`${selectedClient.firstName || ''} ${selectedClient.middleName || ''} ${selectedClient.firstLastName || ''} ${selectedClient.secondLastName || ''}`.replace(/\s+/g, ' ').trim()}</p>
                 </div>
                 <div>
                   <p className="text-muted" style={{ margin: '0 0 0.25rem 0' }}>Cédula / RUC</p>

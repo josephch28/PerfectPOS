@@ -15,9 +15,14 @@ export class PrismaSaleRepository implements ISaleRepository {
           status: sale.status,
           customerId: sale.customerId,
           userId: sale.userId,
-          sellerName: sale.sellerName,
-          customerName: sale.customerName,
-          customerLastName: sale.customerLastName,
+          sellerFirstName: sale.sellerFirstName,
+          sellerMiddleName: sale.sellerMiddleName,
+          sellerFirstLastName: sale.sellerFirstLastName,
+          sellerSecondLastName: sale.sellerSecondLastName,
+          customerFirstName: sale.customerFirstName,
+          customerMiddleName: sale.customerMiddleName,
+          customerFirstLastName: sale.customerFirstLastName,
+          customerSecondLastName: sale.customerSecondLastName,
           customerAddress: sale.customerAddress,
           customerPhone: sale.customerPhone,
           customerEmail: sale.customerEmail,
@@ -102,8 +107,8 @@ export class PrismaSaleRepository implements ISaleRepository {
         where.number = { startsWith: search };
       } else if (searchField === 'customer') {
         where.OR = [
-          { customerName: { startsWith: search } },
-          { customerLastName: { startsWith: search } }
+          { customerFirstName: { startsWith: search } },
+          { customerFirstLastName: { startsWith: search } }
         ];
       } else {
         const isIdSearch = !isNaN(Number(search));
@@ -112,8 +117,8 @@ export class PrismaSaleRepository implements ISaleRepository {
         } else {
           where.OR = [
             { number: { startsWith: search } },
-            { customerName: { startsWith: search } },
-            { customerLastName: { startsWith: search } }
+            { customerFirstName: { startsWith: search } },
+            { customerFirstLastName: { startsWith: search } }
           ];
         }
       }

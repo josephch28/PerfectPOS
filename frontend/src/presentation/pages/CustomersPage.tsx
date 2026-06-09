@@ -24,8 +24,10 @@ export const CustomersPage: React.FC = () => {
 
   const [formData, setFormData] = useState<Client>({
     id: '',
-    name: '',
-    lastName: '',
+    firstName: '',
+    middleName: '',
+    firstLastName: '',
+    secondLastName: '',
     phone: '',
     address: '',
     email: '',
@@ -52,13 +54,19 @@ export const CustomersPage: React.FC = () => {
   const handleOpenModal = (customer?: Client) => {
     if (customer) {
       setEditingCustomer(customer);
-      setFormData(customer);
+      setFormData({
+        ...customer,
+        middleName: customer.middleName || '',
+        secondLastName: customer.secondLastName || ''
+      });
     } else {
       setEditingCustomer(null);
       setFormData({
         id: '',
-        name: '',
-        lastName: '',
+        firstName: '',
+        middleName: '',
+        firstLastName: '',
+        secondLastName: '',
         phone: '',
         address: '',
         email: '',
@@ -124,13 +132,13 @@ export const CustomersPage: React.FC = () => {
         <div style={{ maxWidth: '600px' }}>
           <div className="input-group" style={{ borderRadius: '8px' }}>
             <select value={searchField} onChange={(e) => setSearchField(e.target.value)}>
-              <option value="name">Nombre</option>
-              <option value="lastName">Apellido</option>
+              <option value="firstName">Primer Nombre</option>
+              <option value="firstLastName">Primer Apellido</option>
               <option value="cedula">Cédula</option>
             </select>
             <input
               type="text"
-              placeholder={`Buscar por ${searchField === 'name' ? 'nombre' : searchField === 'lastName' ? 'apellido' : 'cédula'}...`}
+              placeholder={`Buscar por ${searchField === 'firstName' ? 'primer nombre' : searchField === 'firstLastName' ? 'primer apellido' : 'cédula'}...`}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -166,11 +174,13 @@ export const CustomersPage: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              customers.map((customer) => (
+              customers.map((customer) => {
+                const fullName = `${customer.firstName || ''} ${customer.middleName || ''} ${customer.firstLastName || ''} ${customer.secondLastName || ''}`.replace(/\s+/g, ' ').trim();
+                return (
                 <tr key={customer.id}>
                   <td style={{ fontSize: '0.85rem', color: 'var(--slate-600)', fontWeight: 600 }}>{customer.id}</td>
                   <td>
-                    <div style={{ fontWeight: 600, color: 'var(--slate-900)' }}>{customer.name} {customer.lastName}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--slate-900)' }}>{fullName}</div>
                   </td>
                   <td style={{ color: 'var(--slate-600)' }}>{customer.phone}</td>
                   <td style={{ color: 'var(--slate-600)' }}>{customer.email}</td>
@@ -185,7 +195,7 @@ export const CustomersPage: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))
+              )})
             )}
           </tbody>
         </table>
@@ -233,38 +243,87 @@ export const CustomersPage: React.FC = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Nombre</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Primer Nombre</label>
               <div className="input-group">
                 <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
                   <User size={18} color="var(--slate-500)" />
                 </div>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  onKeyDown={allowOnlyLetters}
-                  placeholder="Nombre"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                    allowOnlyLetters(e);
+                  }}
+                  placeholder="Primer Nombre"
                   required
-                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
-                  title="Solo letras y espacios permitidos"
+                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ]+"
+                  title="Solo letras permitidas, sin espacios"
                 />
               </div>
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Apellido</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Segundo Nombre</label>
               <div className="input-group">
                 <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
                   <User size={18} color="var(--slate-500)" />
                 </div>
                 <input
                   type="text"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  onKeyDown={allowOnlyLetters}
-                  placeholder="Apellido"
+                  value={formData.middleName || ''}
+                  onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                    allowOnlyLetters(e);
+                  }}
+                  placeholder="Segundo Nombre (Opcional)"
+                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ]+"
+                  title="Solo letras permitidas, sin espacios"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Primer Apellido</label>
+              <div className="input-group">
+                <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                  <User size={18} color="var(--slate-500)" />
+                </div>
+                <input
+                  type="text"
+                  value={formData.firstLastName}
+                  onChange={(e) => setFormData({ ...formData, firstLastName: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                    allowOnlyLetters(e);
+                  }}
+                  placeholder="Primer Apellido"
                   required
-                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+"
-                  title="Solo letras y espacios permitidos"
+                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ]+"
+                  title="Solo letras permitidas, sin espacios"
+                />
+              </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--slate-700)', fontSize: '0.9rem' }}>Segundo Apellido</label>
+              <div className="input-group">
+                <div style={{ padding: '0.75rem', background: 'var(--slate-50)', borderRight: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center' }}>
+                  <User size={18} color="var(--slate-500)" />
+                </div>
+                <input
+                  type="text"
+                  value={formData.secondLastName || ''}
+                  onChange={(e) => setFormData({ ...formData, secondLastName: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                    allowOnlyLetters(e);
+                  }}
+                  placeholder="Segundo Apellido (Opcional)"
+                  pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ]+"
+                  title="Solo letras permitidas, sin espacios"
                 />
               </div>
             </div>

@@ -29,7 +29,8 @@ export class CustomerController {
 
   async putCustomer(req: Request, res: Response) {
     try {
-      const customer = await this.updateCustomer.execute(req.params.id as string, req.body);
+      const userId = (req as any).user.id;
+      const customer = await this.updateCustomer.execute(req.params.id as string, req.body, userId);
       res.json(customer);
     } catch (error: any) {
       res.status(400).json({ message: error.message });

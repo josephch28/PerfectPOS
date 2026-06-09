@@ -19,8 +19,10 @@ export interface Role {
 export interface User {
   id: string;
   username: string;
-  name: string;
-  lastName: string;
+  firstName: string;
+  middleName?: string | null;
+  firstLastName: string;
+  secondLastName?: string | null;
   cedula: string | null;
   email: string;
   password?: string;
@@ -29,16 +31,22 @@ export interface User {
   isActive: boolean;
   loginAttempts: number;
   isLocked: boolean;
+  lastUpdatedById?: string | null;
+  lastUpdatedBy?: User | null;
 }
 
 export interface Customer {
   id: string;
-  name: string;
-  lastName: string;
+  firstName: string;
+  middleName?: string | null;
+  firstLastName: string;
+  secondLastName?: string | null;
   phone: string;
   address: string;
   email: string;
   isActive: boolean;
+  lastUpdatedById?: string | null;
+  lastUpdatedBy?: User | null;
 }
 
 export interface Product {
@@ -49,6 +57,8 @@ export interface Product {
   stock: number;
   appliesIva: boolean;
   isActive: boolean;
+  lastUpdatedById?: string | null;
+  lastUpdatedBy?: User | null;
 }
 
 export interface PaymentMethod {
@@ -74,14 +84,19 @@ export interface Sale {
   date: Date;
   status: SaleStatus;
   customerId: string;
-  customerName?: string;
-  customerLastName?: string;
+  customerFirstName?: string;
+  customerMiddleName?: string | null;
+  customerFirstLastName?: string;
+  customerSecondLastName?: string | null;
   customerAddress?: string;
   customerPhone?: string;
   customerEmail?: string;
   customer?: Customer;
   userId: string;
-  sellerName?: string;
+  sellerFirstName?: string;
+  sellerMiddleName?: string | null;
+  sellerFirstLastName?: string;
+  sellerSecondLastName?: string | null;
   user?: User;
   paymentMethodId: string;
   paymentMethod?: PaymentMethod;

@@ -82,7 +82,7 @@ const AppContent: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <div style={{ textAlign: 'right', display: 'none' }} className="desktop-user-info">
-              <div style={{ fontWeight: '600', fontSize: '0.875rem' }}>{user?.name} {user?.lastName}</div>
+              <div style={{ fontWeight: '600', fontSize: '0.875rem' }}>{`${user?.firstName || ''} ${user?.middleName || ''} ${user?.firstLastName || ''} ${user?.secondLastName || ''}`.replace(/\s+/g, ' ').trim()}</div>
               <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{user?.role?.name || (user as any)?.roleName}</div>
             </div>
             <button 

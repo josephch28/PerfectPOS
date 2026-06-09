@@ -7,8 +7,10 @@ export interface Role {
 export interface User {
   id: string;
   username: string;
-  name: string;
-  lastName: string;
+  firstName: string;
+  middleName?: string | null;
+  firstLastName: string;
+  secondLastName?: string | null;
   cedula?: string;
   email: string;
   roleId: string;
@@ -20,8 +22,10 @@ export interface User {
 
 export interface Client {
   id: string; // Cédula/RUC
-  name: string;
-  lastName: string;
+  firstName: string;
+  middleName?: string | null;
+  firstLastName: string;
+  secondLastName?: string | null;
   phone: string;
   address: string;
   email: string;
@@ -54,14 +58,19 @@ export interface Invoice {
   date: string;
   status: 'Draft' | 'Confirmed' | 'Cancelled';
   customerId: string;
-  customerName?: string;
-  customerLastName?: string;
+  customerFirstName?: string;
+  customerMiddleName?: string | null;
+  customerFirstLastName?: string;
+  customerSecondLastName?: string | null;
   customerAddress?: string;
   customerPhone?: string;
   customerEmail?: string;
   customer?: Client;
   userId: string;
-  sellerName?: string;
+  sellerFirstName?: string;
+  sellerMiddleName?: string | null;
+  sellerFirstLastName?: string;
+  sellerSecondLastName?: string | null;
   user?: User;
   paymentMethodId: string;
   subtotal: number;

@@ -5,14 +5,31 @@ import { Validators } from '../../../domain/utils/Validators';
 export class CreateCustomerUseCase {
   constructor(private customerRepo: ICustomerRepository) {}
 
-  async execute(customerData: Customer) {
-    // Validate ID (Cédula)
+  async execute(customerData: Customer, adminId?: string) {
+    if (!customerData.id) {
+      throw new Error("El número de documento (Cédula/RUC) es obligatorio.");
+    }
+
     if (!Validators.isValidCedula(customerData.id)) {
       throw new Error("La cédula/RUC debe tener exactamente 10 dígitos numéricos.");
     }
-    if (!Validators.isValidName(customerData.name) || !Validators.isValidName(customerData.lastName)) {
-      throw new Error("El nombre y apellido deben contener únicamente letras.");
+    
+    // Basic validations
+    if (!customerData.firstName || !customerData.firstLastName) {
+      throw new Error("firstName and firstLastName are required");
     }
+
+    const spaceRegex = /\s/;
+    if (spaceRegex.test(customerData.firstName) || spaceRegex.test(customerData.firstLastName)) {
+      throw new Error("Names cannot contain spaces");
+    }
+    if (customerData.middleName && spaceRegex.test(customerData.middleName)) {
+      throw new Error("Names cannot contain spaces");
+    }
+    if (customerData.secondLastName && spaceRegex.test(customerData.secondLastName)) {
+      throw new Error("Names cannot contain spaces");
+    }
+
     if (customerData.phone && !Validators.isValidPhone(customerData.phone)) {
       throw new Error("El teléfono debe tener exactamente 10 dígitos numéricos.");
     }
@@ -32,6 +49,13 @@ export class CreateCustomerUseCase {
       }
     }
 
-    return this.customerRepo.create(customerData);
+    if (adminId) {
+      customerData.lastUpdatedById = adminId;
+    }
+
+    return this.customerRepo.create({
+      ...customerData,
+      isActive: true
+    });
   }
 }

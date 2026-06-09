@@ -39,21 +39,27 @@ export class LoginUseCase {
     // Success
     await this.userRepo.resetLoginAttempts(user.id);
     
-    const token = this.authService.generateToken({
+    const payload = {
       id: user.id,
       username: user.username,
-      role: user.role?.name,
-      name: `${user.name} ${user.lastName}`
-    });
+      firstName: user.firstName,
+      middleName: user.middleName,
+      firstLastName: user.firstLastName,
+      secondLastName: user.secondLastName,
+      role: user.role?.name || ''
+    };
+
+    const token = this.authService.generateToken(payload);
 
     return {
       token,
       user: {
         id: user.id,
         username: user.username,
-        name: user.name,
-        lastName: user.lastName,
-        email: user.email,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        firstLastName: user.firstLastName,
+        secondLastName: user.secondLastName,
         role: user.role
       }
     };
